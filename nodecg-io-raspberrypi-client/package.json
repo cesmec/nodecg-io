@@ -1,0 +1,30 @@
+{
+    "name": "nodecg-io-raspberrypi-client",
+    "version": "0.1.0",
+    "description": "Allows to connect to the GPIO pins of your Raspberry PI. This needs to run on the Raspberry PI.",
+    "homepage": "",
+    "author": {
+        "name": "cesmec",
+        "url": "https://github.com/cesmec"
+    },
+    "scripts": {
+        "build": "tsc",
+        "watch": "tsc -w"
+    },
+    "keywords": [
+        "raspberrypi",
+        "nodecg-bundle"
+    ],
+    "nodecg": {
+        "compatibleRange": "^1.1.1"
+    },
+    "license": "MIT",
+    "devDependencies": {
+        "@types/node": "^13.13.5",
+        "typescript": "^3.8.3"
+    },
+    "dependencies": {
+        "pigpio": "^3.2.3",
+        "socket.io-client": "^2.3.0"
+    }
+}

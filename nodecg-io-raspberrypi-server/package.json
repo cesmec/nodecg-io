@@ -1,5 +1,5 @@
 {
-    "name": "nodecg-io-raspberrypi",
+    "name": "nodecg-io-raspberrypi-server",
     "version": "0.1.0",
     "description": "Allows to connect to the GPIO pins of your Raspberry PI.",
     "homepage": "",
@@ -28,7 +28,6 @@
         "typescript": "^3.8.3"
     },
     "dependencies": {
-        "nodecg-io-core": "0.1.0",
-        "onoff": "^6.0.0"
+        "nodecg-io-core": "0.1.0"
     }
 }

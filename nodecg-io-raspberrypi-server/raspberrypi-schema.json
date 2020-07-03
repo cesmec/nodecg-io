@@ -1,0 +1,14 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "namespace": {
+            "type": "string",
+            "pattern": "/^\\/.*/",
+            "default": "/raspberrypi",
+            "description": "socket.io namespace to use for the Raspberry PI connection"
+        }
+    },
+    "required": []
+}
