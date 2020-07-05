@@ -2,7 +2,7 @@ import { NodeCG } from "nodecg/types/server";
 import { NodeCGIOCore } from "nodecg-io-core/extension";
 import { Service, ServiceProvider } from "nodecg-io-core/extension/types";
 import { emptySuccess, success, error, Result } from "nodecg-io-core/extension/utils/result";
-import { Namespace as SocketIONamespace } from "socket.io";
+import { Namespace as SocketIONamespace, Socket, Server } from "socket.io";
 import { EventEmitter } from "events";
 
 interface RaspberryPiServiceConfig {
@@ -28,19 +28,17 @@ export class RaspberryPiClient {
     private readonly pins: GpioPins = {};
     private readonly events = new EventEmitter();
 
-    constructor(private readonly socket: SocketIONamespace) {
-        socket.on("read", this.handleReadResponse);
-        socket.on("callback", this.handleCallbackResponse);
-        socket.on("connection", this.handleConnection);
+    constructor(private readonly server: Server, private readonly namespace: SocketIONamespace) {
+        namespace.on("connection", this.handleConnection);
     }
 
     waitForConnection(): Promise<void> {
         return new Promise<void>((resolve) => {
-            const connectedCount = Object.keys(this.socket.connected).length;
+            const connectedCount = Object.keys(this.namespace.connected).length;
             if (connectedCount > 0) {
                 resolve();
             } else {
-                this.socket.once("connection", resolve);
+                this.namespace.once("connection", resolve);
             }
         });
     }
@@ -48,34 +46,41 @@ export class RaspberryPiClient {
     write(id: number, value: BinaryValue): void {
         const pin = this.getOrCreatePin(id, "out");
         pin.value = value;
-        this.socket.emit("write", { id, value });
+        this.namespace.emit("write", { id, value });
     }
 
     writePwm(id: number, value: number): void {
         const pin = this.getOrCreatePin(id, "pwm");
         pin.value = value;
-        this.socket.emit("writePwm", { id, value });
+        this.namespace.emit("writePwm", { id, value });
     }
 
     read(id: number): Promise<BinaryValue> {
+        this.getOrCreatePin(id, "in");
         const waitPromise = this.getValue(id);
-        this.socket.emit("read", { id });
+        this.namespace.emit("read", { id });
         return waitPromise;
     }
 
-    setCallback(id: number, callback: (value: number) => void): void {
+    setInterruptCallback(id: number, callback: (value: number) => void): void {
         const pin = this.getOrCreatePin(id, "in");
         pin.callback = callback;
-        const eventName = `callback_${id}`;
+        const eventName = `interrupt_${id}`;
         this.events.removeAllListeners(eventName);
         this.events.addListener(eventName, callback);
-        this.socket.emit("callback", { id });
+        this.namespace.emit("interrupt", { id });
     }
 
     stop(): void {
-        this.socket.off("read", this.handleReadResponse);
-        this.socket.off("callback", this.handleCallbackResponse);
-        this.socket.off("connection", this.handleConnection);
+        for (const key in this.namespace.connected) {
+            if (Object.prototype.hasOwnProperty.call(this.namespace.connected, key)) {
+                const client = this.namespace.connected[key];
+                client.disconnect();
+                this.cleanupClient(client);
+            }
+        }
+        this.namespace.off("connection", this.handleConnection);
+        delete this.server.nsps[this.namespace.name];
     }
 
     private getValue(id: number): Promise<BinaryValue> {
@@ -92,13 +97,17 @@ export class RaspberryPiClient {
         }
     };
 
-    private handleCallbackResponse = ({ id, value }: { id: number; value: number }) => {
-        if (typeof id === "number") {
-            this.events.emit(`callback_${id}`, value);
+    private handleInterrupt = ({ id, value }: { id: number; value: number }) => {
+        if (typeof id === "number" && typeof value === "number") {
+            this.events.emit(`interrupt_${id}`, value);
         }
     };
 
-    private handleConnection = () => {
+    private handleConnection = (client: Socket) => {
+        client.on("read", this.handleReadResponse);
+        client.on("interrupt", this.handleInterrupt);
+        client.once("disconnect", () => this.cleanupClient(client));
+
         for (const id in this.pins) {
             if (Object.prototype.hasOwnProperty.call(this.pins, id)) {
                 const pinId = parseInt(id);
@@ -112,13 +121,20 @@ export class RaspberryPiClient {
                         break;
                     case "in":
                         if (pin.callback) {
-                            this.setCallback(pinId, pin.callback);
+                            this.setInterruptCallback(pinId, pin.callback);
+                        } else {
+                            this.read(pinId);
                         }
                         break;
                 }
             }
         }
     };
+
+    private cleanupClient(client: Socket) {
+        client.off("read", this.handleReadResponse);
+        client.off("interrupt", this.handleInterrupt);
+    }
 
     private getOrCreatePin(id: number, mode: GpioMode) {
         if (!this.pins[id]) {
@@ -152,8 +168,8 @@ module.exports = (nodecg: NodeCG): ServiceProvider<RaspberryPiServiceClient> | u
 };
 
 async function validateConfig(config: RaspberryPiServiceConfig): Promise<Result<void>> {
-    if (typeof config.namespace === "string" && config.namespace[0] !== "/") {
-        return error(`Namespace needs to begin with a "/"`);
+    if (typeof config.namespace === "string" && config.namespace.length > 0 && config.namespace[0] !== "/") {
+        return error(`The namespace must begin with a "/"`);
     }
     return emptySuccess();
 }
@@ -161,14 +177,14 @@ async function validateConfig(config: RaspberryPiServiceConfig): Promise<Result<
 function createClient(nodecg: NodeCG): (config: RaspberryPiServiceConfig) => Promise<Result<RaspberryPiServiceClient>> {
     return async (config) => {
         try {
-            const socket = nodecg.getSocketIOServer();
-            const raspberrypiNamespace = socket.of(config.namespace || "/raspberrypi");
+            const socketServer = nodecg.getSocketIOServer();
+            const namespace = socketServer.of(config.namespace || "/raspberrypi");
 
-            raspberrypiNamespace.on("connection", (client) => {
+            namespace.on("connection", (client) => {
                 nodecg.log.info(`Raspberry PI client connected with Id: ${client.id}`);
             });
 
-            const client = new RaspberryPiClient(raspberrypiNamespace);
+            const client = new RaspberryPiClient(socketServer, namespace);
 
             return success({
                 getRawClient() {

@@ -28,7 +28,7 @@ module.exports = function (nodecg: NodeCG) {
 
             nodecg.log.info(`Blinking LED on pin ${ledPinId}`);
 
-            client.setCallback(buttonPinId, (value) => {
+            client.setInterruptCallback(buttonPinId, (value) => {
                 nodecg.log.info(`Button value: ${value}`);
             });
 
