@@ -38,8 +38,6 @@ module.exports = function (nodecg: NodeCG) {
                 client.write(ledPinId, 0);
                 await delay(500);
             }
-
-            nodecg.log.info("Stopped blinking LED");
         },
         () => nodecg.log.info("Raspberry PI client has been unset."),
     );

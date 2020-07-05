@@ -5,7 +5,10 @@ import { Gpio, terminate } from "pigpio";
 interface Config {
     url: string;
     retryTimeout: number;
+    debounceTime: number;
 }
+
+const pwmMaxValue = 255;
 
 init();
 
@@ -19,40 +22,41 @@ async function init() {
     if (typeof config.retryTimeout !== "number") {
         config.retryTimeout = 5000;
     }
-
-    tryConnect(config);
-}
-
-function tryConnect(config: Config) {
-    try {
-        connect(config);
-    } catch (error) {
-        console.log(`Connection failed: ${error}`);
-        setTimeout(() => tryConnect(config), config.retryTimeout);
+    if (typeof config.debounceTime !== "number") {
+        config.debounceTime = 10000;
     }
+
+    connect(config);
 }
 
 function connect(config: Config) {
     console.log(`Connecting to ${config.url}`);
-    const client = new Client();
+    const client = new Client(config);
     const connection = io(config.url);
     connection.on("read", ({ id }: { id: number }) => {
-        connection.emit("read", { id, value: client.read(id) });
+        if (typeof id === "number") {
+            connection.emit("read", { id, value: client.read(id) });
+        }
     });
     connection.on("write", ({ id, value }: { id: number; value: number }) => {
-        client.write(id, value);
+        if (typeof id === "number" && typeof value === "number") {
+            client.write(id, value);
+        }
     });
     connection.on("writePwm", ({ id, value }: { id: number; value: number }) => {
-        client.writePwm(id, value);
+        if (typeof id === "number" && typeof value === "number") {
+            client.writePwm(id, value);
+        }
     });
     connection.on("interrupt", ({ id }: { id: number }) => {
-        client.setInterruptCallback(id, (value) => {
-            connection.emit("interrupt", { id, value });
-        });
+        if (typeof id === "number") {
+            client.setInterruptCallback(id, (value) => {
+                connection.emit("interrupt", { id, value });
+            });
+        }
     });
     connection.on("disconnect", () => {
         client.stop();
-        setTimeout(() => tryConnect(config), config.retryTimeout);
     });
 }
 
@@ -75,24 +79,30 @@ function readConfig(): Promise<Config> {
 class Client {
     private readonly pins: Record<number, Gpio> = {};
 
+    constructor(private readonly config: Config) {}
+
     read(id: number) {
         const pin = this.getPin(id, Gpio.INPUT);
         return pin.digitalRead();
     }
 
     write(id: number, value: number) {
-        const pin = this.getPin(id, Gpio.OUTPUT);
-        pin.digitalWrite(value);
+        if (value === 0 || value === 1) {
+            const pin = this.getPin(id, Gpio.OUTPUT);
+            pin.digitalWrite(value);
+        }
     }
 
     writePwm(id: number, value: number) {
-        const pin = this.getPin(id, Gpio.OUTPUT);
-        pin.pwmWrite(value);
+        if (value >= 0 && value <= pwmMaxValue) {
+            const pin = this.getPin(id, Gpio.OUTPUT);
+            pin.pwmWrite(value);
+        }
     }
 
     setInterruptCallback(id: number, callback: (value: number) => void) {
         const pin = this.getPin(id, Gpio.INPUT, true);
-        pin.glitchFilter(10000);
+        pin.glitchFilter(this.config.debounceTime);
         pin.on("alert", callback);
     }
 

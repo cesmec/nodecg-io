@@ -1,7 +1,7 @@
 import { NodeCG } from "nodecg/types/server";
-import { NodeCGIOCore } from "nodecg-io-core/extension";
-import { Service, ServiceProvider } from "nodecg-io-core/extension/types";
+import { ServiceProvider } from "nodecg-io-core/extension/types";
 import { emptySuccess, success, error, Result } from "nodecg-io-core/extension/utils/result";
+import { ServiceBundle } from "nodecg-io-core/extension/serviceBundle";
 import { Namespace as SocketIONamespace, Socket, Server } from "socket.io";
 import { EventEmitter } from "events";
 
@@ -149,42 +149,41 @@ export interface RaspberryPiServiceClient {
 }
 
 module.exports = (nodecg: NodeCG): ServiceProvider<RaspberryPiServiceClient> | undefined => {
-    nodecg.log.info("Raspberry PI bundle started");
-    const core = (nodecg.extensions["nodecg-io-core"] as unknown) as NodeCGIOCore | undefined;
-    if (core === undefined) {
-        nodecg.log.error("nodecg-io-core isn't loaded! Raspberry PI bundle won't function without it.");
-        return undefined;
-    }
-
-    const service: Service<RaspberryPiServiceConfig, RaspberryPiServiceClient> = {
-        schema: core.readSchema(__dirname, "../raspberrypi-schema.json"),
-        serviceType: "raspberrypi",
-        validateConfig: validateConfig,
-        createClient: createClient(nodecg),
-        stopClient: stopClient,
-    };
-
-    return core.registerService(service);
+    const raspberrypiService = new RaspberrypiService(
+        nodecg,
+        "raspberrypi-server",
+        __dirname,
+        "../raspberrypi-schema.json",
+    );
+    return raspberrypiService.register();
 };
 
-async function validateConfig(config: RaspberryPiServiceConfig): Promise<Result<void>> {
-    if (typeof config.namespace === "string" && config.namespace.length > 0 && config.namespace[0] !== "/") {
-        return error(`The namespace must begin with a "/"`);
-    }
-    return emptySuccess();
-}
+//only one client can be active at once, because they use the same namespace of socket.io
+let activeClient: RaspberryPiClient | undefined = undefined;
 
-function createClient(nodecg: NodeCG): (config: RaspberryPiServiceConfig) => Promise<Result<RaspberryPiServiceClient>> {
-    return async (config) => {
+class RaspberrypiService extends ServiceBundle<RaspberryPiServiceConfig, RaspberryPiServiceClient> {
+    async validateConfig(config: RaspberryPiServiceConfig): Promise<Result<void>> {
+        if (typeof config.namespace === "string" && config.namespace.length > 0 && config.namespace[0] !== "/") {
+            return error(`The namespace must begin with a "/"`);
+        }
+        return emptySuccess();
+    }
+
+    async createClient(config: RaspberryPiServiceConfig): Promise<Result<RaspberryPiServiceClient>> {
         try {
-            const socketServer = nodecg.getSocketIOServer();
+            if (activeClient) {
+                activeClient.stop();
+            }
+
+            const socketServer = this.nodecg.getSocketIOServer();
             const namespace = socketServer.of(config.namespace || "/raspberrypi");
 
             namespace.on("connection", (client) => {
-                nodecg.log.info(`Raspberry PI client connected with Id: ${client.id}`);
+                this.nodecg.log.info(`Raspberry PI client connected with Id: ${client.id}`);
             });
 
             const client = new RaspberryPiClient(socketServer, namespace);
+            activeClient = client;
 
             return success({
                 getRawClient() {
@@ -194,10 +193,12 @@ function createClient(nodecg: NodeCG): (config: RaspberryPiServiceConfig) => Pro
         } catch (err) {
             return error(err.toString());
         }
-    };
-}
+    }
 
-function stopClient(client: RaspberryPiServiceClient): void {
-    const rawClient = client.getRawClient();
-    rawClient.stop();
+    stopClient(client: RaspberryPiServiceClient): void {
+        const rawClient = client.getRawClient();
+        if (rawClient === activeClient) {
+            rawClient.stop();
+        }
+    }
 }
