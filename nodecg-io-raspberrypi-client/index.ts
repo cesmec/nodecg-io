@@ -12,8 +12,6 @@ const pwmMaxValue = 255;
 
 init();
 
-process.on("exit", terminate);
-
 async function init() {
     const config = await readConfig();
     if (typeof config.url !== "string") {
@@ -30,33 +28,56 @@ async function init() {
 }
 
 function connect(config: Config) {
-    console.log(`Connecting to ${config.url}`);
     const client = new Client(config);
-    const connection = io(config.url);
-    connection.on("read", ({ id }: { id: number }) => {
-        if (typeof id === "number") {
-            connection.emit("read", { id, value: client.read(id) });
+
+    process.on("exit", client.stop);
+
+    const socket = io(config.url);
+
+    const reconnect = () => {
+        console.log(`Reconnecting in ${config.retryTimeout} ms`);
+        setTimeout(() => {
+            socket.connect();
+        }, config.retryTimeout);
+    };
+
+    socket.on("connect", () => {
+        console.log(`Connected to ${config.url}`);
+    });
+    socket.on("error", (error: unknown) => {
+        console.log(`An Error occurred: ${error}`);
+        socket.close();
+
+        reconnect();
+    });
+    socket.on("disconnect", (reason: string) => {
+        console.log(`Disconnected with reason: ${reason}`);
+        if (reason === "io server disconnect") {
+            reconnect();
         }
     });
-    connection.on("write", ({ id, value }: { id: number; value: number }) => {
+
+    socket.on("read", ({ id }: { id: number }) => {
+        if (typeof id === "number") {
+            socket.emit("read", { id, value: client.read(id) });
+        }
+    });
+    socket.on("write", ({ id, value }: { id: number; value: number }) => {
         if (typeof id === "number" && typeof value === "number") {
             client.write(id, value);
         }
     });
-    connection.on("writePwm", ({ id, value }: { id: number; value: number }) => {
+    socket.on("writePwm", ({ id, value }: { id: number; value: number }) => {
         if (typeof id === "number" && typeof value === "number") {
             client.writePwm(id, value);
         }
     });
-    connection.on("interrupt", ({ id }: { id: number }) => {
+    socket.on("interrupt", ({ id }: { id: number }) => {
         if (typeof id === "number") {
             client.setInterruptCallback(id, (value) => {
-                connection.emit("interrupt", { id, value });
+                socket.emit("interrupt", { id, value });
             });
         }
-    });
-    connection.on("disconnect", () => {
-        client.stop();
     });
 }
 
@@ -106,7 +127,7 @@ class Client {
         pin.on("alert", callback);
     }
 
-    stop() {
+    stop = () => {
         for (const id in this.pins) {
             if (Object.prototype.hasOwnProperty.call(this.pins, id)) {
                 const pin = this.pins[id];
@@ -114,7 +135,7 @@ class Client {
             }
         }
         terminate();
-    }
+    };
 
     private getPin(id: number, mode: number, alert?: boolean) {
         if (!this.pins[id]) {
