@@ -36,7 +36,7 @@
             {
                 "name": "nodecg-io",
                 "title": "nodecg-io",
-                "file": "panel.html",
+                "file": "index.html",
                 "fullbleed": true,
                 "headerColor": "#525F78"
             }

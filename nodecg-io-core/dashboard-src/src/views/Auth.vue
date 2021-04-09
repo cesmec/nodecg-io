@@ -1,18 +1,15 @@
 <template>
-    <div id="divAuth">
-        <!--todo: nodecg-io logo-->
-        <p id="pFirstStartup" :class="firstStartup ? '' : 'hidden'">
+    <div class="auth">
+        <img class="logo" alt="nodecg-io header" src="../assets/header_white.png" />
+        <p v-if="firstStartup">
             This seems to be your first startup of nodecg-io. Please choose a password which will be used to encrypt all
             your credentials.
         </p>
-        <p>Login:</p>
-        <div class="margins">
-            <form :submit="submitForm">
-                <label for="inputPassword">Password: </label>
-                <input type="password" id="inputPassword" :value="password" />
-                <button type="submit">Login</button>
-            </form>
-        </div>
+        <p v-else>Dashboard Login:</p>
+        <form :submit="submitForm">
+            <input type="password" id="inputPassword" :value="password" placeholder="Password" />
+            <button type="submit" class="button">Login</button>
+        </form>
     </div>
 </template>
 
@@ -81,7 +78,27 @@ export default class Auth extends Vue {
 </script>
 
 <style scoped>
-.hidden {
-    display: none;
+.auth {
+    width: 100%;
+    margin: 0 auto;
+    background: rgb(44, 44, 44);
+    padding: 30px;
+    box-shadow: 5px 5px 10px 0px rgba(0, 0, 0, 0.5);
+    border-radius: 5px;
+}
+
+.logo {
+    width: 80%;
+}
+
+form {
+    width: 200px;
+    margin: 0 auto;
+}
+
+.button {
+    padding: 5px;
+    width: 200px;
+    margin-top: 10px;
 }
 </style>
