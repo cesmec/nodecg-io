@@ -1,34 +1,47 @@
 <template>
-    <div class="auth">
-        <img class="logo" alt="nodecg-io header" src="../assets/header_white.png" />
-        <p v-if="firstStartup">
-            This seems to be your first startup of nodecg-io. Please choose a password which will be used to encrypt all
-            your credentials.
-        </p>
-        <p v-else>Dashboard Login:</p>
-        <form :submit="submitForm">
-            <input type="password" id="inputPassword" :value="password" placeholder="Password" />
-            <button type="submit" class="button">Login</button>
-        </form>
-    </div>
+    <v-card elevation="2">
+        <v-card-title>
+            <img class="logo" alt="nodecg-io header" src="../assets/header_white.png" />
+        </v-card-title>
+        <v-card-text>
+            <p v-if="firstStartup">
+                This seems to be your first startup of nodecg-io. Please choose a password which will be used to encrypt
+                all your credentials.
+            </p>
+            <p v-else>Dashboard Login:</p>
+            <v-form @submit="submitForm" ref="form">
+                <v-text-field
+                    label="Password"
+                    name="inputPassword"
+                    type="password"
+                    :rules="rules"
+                    :error-messages="passwordErrors"
+                    v-model="password"
+                    hide-details="auto"
+                />
+                <v-btn class="mr-4 button" @click="submitForm">Login</v-btn>
+            </v-form>
+        </v-card-text>
+    </v-card>
 </template>
 
 <script lang="ts">
 import {} from "nodecg/types/browser";
-import { Component, Vue } from "vue-property-decorator";
+import { Component, Ref, Vue } from "vue-property-decorator";
 import { authService } from "@/services/authService";
 import { isPasswordSet, setPassword } from "@/services/crypto";
 
 @Component({})
 export default class Auth extends Vue {
-    loggedIn = false;
-    loaded = false;
     firstStartup = false;
 
     password = "";
-    passwordNotice = "";
+    passwordErrors: string[] = [];
+    readonly rules = [(value: string): string | true => !!value || "Required"];
 
-    async mounted(): Promise<void> {
+    @Ref("form") form!: { validate(): boolean };
+
+    mounted(): void {
         // Handler for when the socket.io client re-connects which is usually a nodecg restart.
         window.nodecg.socket.on("connect", () => {
             // Give nodecg 200ms to fully connect so everything is usable.
@@ -48,9 +61,16 @@ export default class Auth extends Vue {
         this.updateFirstStartupLabel();
     }
 
+    unmounted(): void {
+        //todo (https://class-component.vuejs.org/guide/caveats.html#this-value-in-property-initializer)
+        //window.nodecg.socket.off("connect", this.nodecgConnect);
+    }
+
     submitForm(e: Event): void {
         e.preventDefault();
-        this.loadFramework();
+        if (this.form.validate()) {
+            this.loadFramework();
+        }
     }
 
     async updateLoadedStatus(): Promise<void> {
@@ -62,10 +82,9 @@ export default class Auth extends Vue {
 
     async loadFramework(): Promise<void> {
         if (await setPassword(this.password)) {
-            this.passwordNotice = "";
+            this.passwordErrors = [];
         } else {
-            this.passwordNotice = "The provided password isn't correct!";
-            this.password = "";
+            this.passwordErrors = ["The provided password isn't correct!"];
         }
 
         this.updateLoadedStatus();
@@ -78,27 +97,18 @@ export default class Auth extends Vue {
 </script>
 
 <style scoped>
-.auth {
-    width: 100%;
-    margin: 0 auto;
-    background: rgb(44, 44, 44);
-    padding: 30px;
-    box-shadow: 5px 5px 10px 0px rgba(0, 0, 0, 0.5);
-    border-radius: 5px;
-}
-
 .logo {
     width: 80%;
 }
 
 form {
-    width: 200px;
-    margin: 0 auto;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
 }
 
 .button {
-    padding: 5px;
+    margin-left: 20px;
     width: 200px;
-    margin-top: 10px;
 }
 </style>

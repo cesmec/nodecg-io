@@ -1,0 +1,19 @@
+* {
+  box-sizing: border-box;
+}
+
+#app {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: white;
+  background-color: transparent;
+}
+
+/* Prevent unneccesary y-scrollbar */
+.v-application--wrap {
+  min-height: unset !important;
+}
+
+html {
+  overflow-y: unset !important;
+}
