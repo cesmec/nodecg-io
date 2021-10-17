@@ -1,52 +1,54 @@
 <template>
     <div>
         <div v-if="loggedIn">
-            <p>logged in (todo)</p>
+            <Services />
         </div>
         <div v-else class="auth-container">
             <div class="auth-main">
                 <div>
-                    <Auth />
+                    <Auth :loaded="loaded" />
                 </div>
-            </div>
-            <div class="auth-footer">
-                <p>Minzig!</p>
-                <p>Status: {{ loaded ? "Loaded" : "Not loaded" }}</p>
             </div>
         </div>
     </div>
 </template>
 
 <script lang="ts">
-import { Component, Vue } from "vue-property-decorator";
-import Auth from "@/components/Auth.vue";
+import { defineComponent } from "vue";
+import Auth from "@/views/Auth.vue";
+import Services from "@/views/Services.vue";
 import { authService } from "@/services/authService";
 
-@Component({
+export default defineComponent({
+    name: "Dashboard",
     components: {
         Auth,
+        Services,
     },
-})
-export default class Dashboard extends Vue {
-    loaded = false;
-    loggedIn = false;
-
-    async mounted(): Promise<void> {
-        this.loaded = await authService.isLoaded();
-        authService.on("loadedChange", (loaded) => {
-            this.loaded = loaded;
-        });
-        authService.on("loginChange", (loggedIn: boolean) => {
-            this.loggedIn = loggedIn;
-        });
-    }
-
+    data() {
+        return {
+            loaded: false,
+            loggedIn: false,
+        };
+    },
+    mounted(): void {
+        authService.isLoaded().then(this.loadedChange);
+        authService.on("loadedChange", this.loadedChange);
+        authService.on("loginChange", this.loginChange);
+    },
     unmounted(): void {
-        //todo (https://class-component.vuejs.org/guide/caveats.html#this-value-in-property-initializer)
-        //authService.off("loginChange", this.loginChange);
-        //authService.off("loadedChange", this.loadedChange);
+        authService.off("loginChange", this.loginChange);
+        authService.off("loadedChange", this.loadedChange);
+    },
+    methods: {
+        loginChange(loggedIn: boolean) {
+            this.loggedIn = loggedIn;
+        },
+        loadedChange(loaded: boolean) {
+            this.loaded = loaded;
+        },
     }
-}
+});
 </script>
 
 <style scoped>
@@ -56,10 +58,6 @@ export default class Dashboard extends Vue {
     height: calc(100vh - 30px);
     align-items: center;
     justify-content: space-evenly;
-}
-
-.auth-footer > p {
-    margin: 2px 0;
 }
 
 .auth-main {

@@ -1,12 +1,11 @@
 {
   "compilerOptions": {
-    "target": "es2019", //https://github.com/vuejs/vue-cli/issues/4738#issuecomment-565057952
+    "target": "esnext",
     "module": "esnext",
     "strict": true,
     "jsx": "preserve",
     "importHelpers": true,
     "moduleResolution": "node",
-    "experimentalDecorators": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,

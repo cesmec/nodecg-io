@@ -7,14 +7,20 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from "vue-property-decorator";
-import "@/assets/global.css";
+import { defineComponent } from "vue";
 import Dashboard from "@/views/Dashboard.vue";
+import "@/assets/global.css";
 
-@Component({
+export default defineComponent({
+    name: "App",
     components: {
         Dashboard,
     },
-})
-export default class App extends Vue {}
+
+    data() {
+        return {
+            //
+        };
+    },
+});
 </script>
