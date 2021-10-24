@@ -4,7 +4,7 @@
             <img class="logo" alt="nodecg-io header" src="header_white.png" />
         </v-card-title>
         <v-card-text>
-            <form v-if="loaded" @submit="submitForm" ref="form">
+            <form @submit="submitForm" ref="form">
                 <v-container>
                     <v-row>
                         <v-col>
@@ -37,9 +37,6 @@
                     </v-row>
                 </v-container>
             </form>
-            <div class="center" v-else>
-                <v-progress-circular indeterminate size="50" />
-            </div>
         </v-card-text>
     </v-card>
 </template>
@@ -51,12 +48,6 @@ import { isPasswordSet, setPassword } from "@/services/crypto";
 
 export default defineComponent({
     name: "Auth",
-    props: {
-        loaded: {
-            type: Boolean,
-            required: false,
-        },
-    },
     data() {
         return {
             firstStartup: false,
@@ -67,14 +58,14 @@ export default defineComponent({
     },
     mounted(): void {
         // Handler for when the socket.io client re-connects which is usually a nodecg restart.
-        window.nodecg.socket.on("connect", this.nodecgConnect);
+        authService.on("connect", this.nodecgConnect);
 
         // Render loaded status for initial load
         this.updateLoadedStatus();
         this.updateFirstStartupLabel();
     },
     unmounted(): void {
-        window.nodecg.socket.off("connect", this.nodecgConnect);
+        authService.off("connect", this.nodecgConnect);
     },
     methods: {
         nodecgConnect(): void {
@@ -106,13 +97,13 @@ export default defineComponent({
             if (await setPassword(this.password)) {
                 this.passwordErrors = [];
             } else {
-                this.passwordErrors = ["The provided password isn't correct!"];
+                this.passwordErrors = ["The provided password is incorrect!"];
             }
 
             this.updateLoadedStatus();
         },
         async updateFirstStartupLabel(): Promise<void> {
-            this.firstStartup = await window.nodecg.sendMessage("isFirstStartup");
+            this.firstStartup = await authService.isFirstStartup();
         },
     },
 });

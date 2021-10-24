@@ -34,11 +34,24 @@ class AuthService extends EventEmitter {
 
     async isLoaded(): Promise<boolean> {
         return new Promise<boolean>((resolve) => {
-            nodecg.sendMessage("isLoaded", (_err, res) => resolve(res));
-            setTimeout(() => resolve(false), 5000); // Fallback in case connection gets lost.
+            const fallback = setTimeout(() => resolve(false), 5000); // Fallback in case connection gets lost.
+            nodecg.sendMessage("isLoaded", (_err, res) => {
+                resolve(res);
+                clearTimeout(fallback);
+            });
         }).then((loaded) => {
             this.emit("loadedChange", loaded);
             return loaded;
+        });
+    }
+
+    async isFirstStartup(): Promise<boolean> {
+        return new Promise<boolean>((resolve) => {
+            const fallback = setTimeout(() => resolve(false), 5000); // Fallback in case connection gets lost.
+            nodecg.sendMessage("isFirstStartup", (_err, res) => {
+                resolve(res);
+                clearTimeout(fallback);
+            });
         });
     }
 }

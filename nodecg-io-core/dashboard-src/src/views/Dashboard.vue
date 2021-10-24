@@ -6,7 +6,7 @@
         <div v-else class="auth-container">
             <div class="auth-main">
                 <div>
-                    <Auth :loaded="loaded" />
+                    <Auth />
                 </div>
             </div>
         </div>
@@ -32,7 +32,7 @@ export default defineComponent({
         };
     },
     mounted(): void {
-        authService.isLoaded().then(this.loadedChange);
+        authService.isLoaded().then((loaded) => this.loadedChange(loaded));
         authService.on("loadedChange", this.loadedChange);
         authService.on("loginChange", this.loginChange);
     },
@@ -47,7 +47,7 @@ export default defineComponent({
         loadedChange(loaded: boolean) {
             this.loaded = loaded;
         },
-    }
+    },
 });
 </script>
 
