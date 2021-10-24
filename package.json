@@ -32,7 +32,7 @@
     },
     "workspaces": [
         "nodecg-io-core",
-        "nodecg-io-core/dashboard",
+        "nodecg-io-core/dashboard-src",
         "services/*",
         "samples/*",
         "utils/*"
