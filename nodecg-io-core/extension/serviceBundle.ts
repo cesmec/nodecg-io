@@ -1,6 +1,6 @@
 import { NodeCGIOCore } from ".";
-import { NodeCG } from "nodecg/types/server";
-import { Service } from "./types";
+import { NodeCG } from "nodecg-types/types/server";
+import { ObjectMap, Service } from "./service";
 import { Result } from "./utils/result";
 
 import * as fs from "fs";
@@ -18,12 +18,19 @@ export abstract class ServiceBundle<R, C> implements Service<R, C> {
     public core: NodeCGIOCore | undefined;
     public nodecg: NodeCG;
     public serviceType: string;
-    public schema: unknown;
+    public schema?: ObjectMap<unknown>;
 
     /**
      * The default value for the config.
      */
     public defaultConfig?: R;
+
+    /**
+     * Config presets that the user can choose to load as their config.
+     * Useful for e.g. detected devices with everything already filled in for that specific device.
+     * Can also be used to show the user multiple different authentication methods or similar.
+     */
+    public presets?: ObjectMap<R>;
 
     /**
      * This constructor creates the service and gets the nodecg-io-core
@@ -37,7 +44,7 @@ export abstract class ServiceBundle<R, C> implements Service<R, C> {
         this.schema = this.readSchema(pathSegments);
 
         this.nodecg.log.info(this.serviceType + " bundle started.");
-        this.core = (this.nodecg.extensions["nodecg-io-core"] as unknown) as NodeCGIOCore | undefined;
+        this.core = this.nodecg.extensions["nodecg-io-core"] as unknown as NodeCGIOCore | undefined;
         if (this.core === undefined) {
             this.nodecg.log.error(
                 "nodecg-io-core isn't loaded! " + this.serviceType + " bundle won't function without it.",
@@ -107,7 +114,9 @@ export abstract class ServiceBundle<R, C> implements Service<R, C> {
      */
     requiresNoConfig = false;
 
-    private readSchema(pathSegments: string[]): unknown {
+    private readSchema(pathSegments: string[]): ObjectMap<unknown> | undefined {
+        if (pathSegments.length === 0) return undefined;
+
         const joinedPath = path.resolve(...pathSegments);
         try {
             const fileContent = fs.readFileSync(joinedPath, "utf8");

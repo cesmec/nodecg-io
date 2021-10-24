@@ -10,8 +10,18 @@ node_modules/
 # generated type definitions
 *.d.ts
 
-# js config files
-!*.config.js
+# generated source mapping files
+*.d.ts.map
+
+# generated build info
+*.tsbuildinfo
+
+# Coverage reports by jest
+coverage
+
+# Dashboard webpack
+nodecg-io-core/dashboard/dist
+!nodecg-io-core/dashboard/webpack.config.js
 
 # Editor configuration
 .idea/
@@ -21,7 +31,6 @@ node_modules/
 !/.vscode/launch.json
 !/.vscode/settings.json
 
-
 # Lerna temporary files
 package.json.lerna_backup
 
@@ -29,8 +38,14 @@ package.json.lerna_backup
 !.eslintrc.js
 !.prettierrc.js
 
+# Configuration of jest
+!jest.config.js
+
 # Documentation
 docs/
 
-#lerna debug
+# lerna debug
 lerna-debug.log
+
+# nodecg-io-cli install details. Created when installing development version using nodecg-io install.
+install.json

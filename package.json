@@ -2,29 +2,39 @@
     "name": "nodecg-io",
     "private": true,
     "scripts": {
-        "bootstrap": "lerna bootstrap",
-        "bs": "npm run bootstrap",
-        "clean": "lerna run --parallel clean",
-        "build": "lerna run --stream build",
-        "bsb": "npm run bootstrap && npm run build",
+        "clean": "tsc -b --clean",
+        "update": "node .scripts/update-paths.mjs",
+        "postupdate": "prettier -w --loglevel silent \"./**/*.json\"",
+        "prebuild": "npm run update",
+        "build": "tsc -b",
+        "postbuild": "npm run build --workspaces --if-present",
+        "test": "jest",
+        "watchTest": "jest --watch",
+        "coverage": "jest --coverage",
         "rebuild": "npm run clean && npm run build",
-        "watch": "lerna run --parallel watch",
-        "lint": "eslint . --ext ts",
+        "prewatch": "npm run update",
+        "watch": "tsc -b -w",
+        "postwatch": "npm run watch --workspaces --if-present",
+        "lint": "eslint . --ext ts --ignore-pattern '**/*.d.ts'",
         "format": "prettier --write \"./**/*.{ts,html,css,json}\"",
         "format-pre-commit": "pretty-quick --staged --pattern '*/**/*.{ts,html,css,json}'",
         "prepare": "husky install"
     },
     "devDependencies": {
-        "@typescript-eslint/eslint-plugin": "^4.17.0",
-        "@typescript-eslint/parser": "^4.17.0",
-        "eslint": "^7.21.0",
-        "eslint-config-prettier": "^8.1.0",
-        "eslint-plugin-prettier": "^3.3.1",
-        "husky": "^5.1.3",
-        "lerna": "^3.22.1",
+        "@typescript-eslint/eslint-plugin": "^4.22.1",
+        "@typescript-eslint/parser": "^4.22.1",
+        "eslint": "^7.25.0",
+        "husky": "^6.0.0",
         "nodemon": "^2.0.7",
         "prettier": "^2.2.1",
         "pretty-quick": "^3.1.0",
-        "typescript": "^4.2.3"
-    }
+        "typescript": "^4.2.4"
+    },
+    "workspaces": [
+        "nodecg-io-core",
+        "nodecg-io-core/dashboard",
+        "services/*",
+        "samples/*",
+        "utils/*"
+    ]
 }

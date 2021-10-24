@@ -1,10 +1,10 @@
 import { PersistentData, EncryptedData, decryptData } from "nodecg-io-core/extension/persistenceManager";
 import { EventEmitter } from "events";
-import { ObjectMap, ServiceInstance, ServiceDependency, Service } from "nodecg-io-core/extension/types";
+import { ObjectMap, ServiceInstance, ServiceDependency, Service } from "nodecg-io-core/extension/service";
 import { authService } from "./authService";
 import { PasswordMessage } from "nodecg-io-core/extension/messageManager";
 
-export const encryptedData = nodecg.Replicant<EncryptedData>("encryptedConfig");
+const encryptedData = nodecg.Replicant<EncryptedData>("encryptedConfig");
 let services: Service<unknown, never>[] | undefined;
 let password: string | undefined;
 
@@ -15,8 +15,8 @@ let password: string | undefined;
  * b. having everything at hand using one variable is quite nice so I've added services here to complete it.
  */
 interface ConfigData {
-    instances: ObjectMap<string, ServiceInstance<unknown, unknown>>;
-    bundles: ObjectMap<string, ServiceDependency<unknown>[]>;
+    instances: ObjectMap<ServiceInstance<unknown, unknown>>;
+    bundles: ObjectMap<ServiceDependency<unknown>[]>;
     services: Service<unknown, never>[];
 }
 
@@ -39,11 +39,11 @@ class Config extends EventEmitter {
 export const config = new Config();
 
 // Update the decrypted copy of the data once the encrypted version changes (if pw available).
-// This ensures that the decrypted data is kept uptodate.
+// This ensures that the decrypted data is kept up-to-date.
 encryptedData.on("change", updateDecryptedData);
 
 /**
- * Sets the passed passwort to be used by the crypto module.
+ * Sets the passed password to be used by the crypto module.
  * Will try to decrypt decrypted data to tell whether the password is correct,
  * if it is wrong the internal password will be set to undefined.
  * Returns whether the password is correct.

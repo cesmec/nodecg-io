@@ -3,7 +3,7 @@
 [![Feature Requests](https://img.shields.io/github/issues/codeoverflow-org/nodecg-io/enhancement?label=Feature%20Requests&style=flat-square)](https://github.com/codeoverflow-org/nodecg-io/labels/enhancement)
 [![Bugs](https://img.shields.io/github/issues/codeoverflow-org/nodecg-io/bug?label=Bugs&style=flat-square)](https://github.com/codeoverflow-org/nodecg-io/labels/bug)
 [![Pull Requests](https://img.shields.io/github/issues-pr/codeoverflow-org/nodecg-io?label=Pull%20Requests&style=flat-square)](https://github.com/codeoverflow-org/nodecg-io/pulls)
-[![Services](https://img.shields.io/static/v1?label=Services%20implemented&message=21&color=blue&style=flat-square)](https://nodecg.io/RELEASE/services/)
+[![Services](https://img.shields.io/static/v1?label=Services%20implemented&message=38&color=blue&style=flat-square)](https://nodecg.io/RELEASE/services/)
 [![License](https://img.shields.io/github/license/codeoverflow-org/nodecg-io?label=License&style=flat-square)](https://github.com/codeoverflow-org/nodecg-io/blob/master/LICENSE)
 [![Discord](https://img.shields.io/badge/discord-join-7289DA.svg?logo=discord&style=flat-square)](https://discord.gg/GEJzxBGRu6)
 
@@ -15,39 +15,45 @@ nodecg-io is the successor of [ChatOverflow](https://github.com/codeoverflow-org
 
 ## Implemented Services and Interfaces
 
--   [x] AutoHotkey
--   [x] Android (using adb)
--   [x] CurseForge
--   [x] Discord
--   [x] Google Sheets (gsheets)
--   [x] IntelliJ IDEs
--   [x] IRC (Internet Relay Chat)
--   [x] MIDI Input
--   [x] MIDI Output
--   [x] Nanoleafs
--   [x] OBS
--   [x] Philips Hue
--   [x] RCON
--   [x] Reddit
--   [x] sACN Receiver
--   [x] sACN Sender
--   [x] Serial Port (Arduino)
--   [x] Slack WebAPI
--   [x] Spotify
--   [x] Elgato Stream Deck
--   [x] StreamElements
--   [x] Telegram
--   [x] TIANE
--   [ ] TipeeeStream
--   [x] Twitch Addons
--   [x] Twitch API
--   [x] Twitch Chat
--   [x] Twitch PubSub
--   [x] Twitter
--   [x] WebSocket Client
--   [x] WebSocket Server
--   [x] Xdotool
--   [x] YouTube
+- AutoHotkey
+- Android (using adb)
+- Art-Net
+- CurseForge
+- DBus
+- Discord
+- Discord RPC
+- Elgato lights
+- GitHub
+- Google APIs
+- IntelliJ IDEs
+- IRC (Internet Relay Chat)
+- MIDI Input
+- MIDI Output
+- MQTT
+- Nanoleafs
+- OBS
+- Philips Hue
+- RCON
+- Reddit
+- sACN Receiver
+- sACN Sender
+- Serial Port (Arduino)
+- [Shlink](https://shlink.io/)
+- Slack Web API
+- Spotify
+- SQL (using [knex](https://knexjs.org/))
+- Elgato Stream Deck
+- StreamElements
+- Telegram
+- TIANE
+- Twitch Add-ons
+- Twitch API
+- Twitch Chat
+- Twitch PubSub
+- Twitter
+- WebSocket Client
+- WebSocket Server
+- Xdotool
 
 ## How to use nodecg-io
 

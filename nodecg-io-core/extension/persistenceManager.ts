@@ -1,9 +1,9 @@
-import { NodeCG, ReplicantServer } from "nodecg/types/server";
+import { NodeCG, ReplicantServer } from "nodecg-types/types/server";
 import { InstanceManager } from "./instanceManager";
 import { BundleManager } from "./bundleManager";
 import * as crypto from "crypto-js";
 import { emptySuccess, error, Result, success } from "./utils/result";
-import { ObjectMap, ServiceDependency, ServiceInstance } from "./types";
+import { ObjectMap, ServiceDependency, ServiceInstance } from "./service";
 import { ServiceManager } from "./serviceManager";
 
 /**
@@ -13,11 +13,11 @@ export interface PersistentData {
     /**
      * All instance data that is held by the {@link InstanceManager}.
      */
-    instances: ObjectMap<string, ServiceInstance<unknown, unknown>>;
+    instances: ObjectMap<ServiceInstance<unknown, unknown>>;
     /**
      * All bundle dependency data that is held by the {@link BundleManager}.
      */
-    bundleDependencies: ObjectMap<string, ServiceDependency<unknown>[]>;
+    bundleDependencies: ObjectMap<ServiceDependency<unknown>[]>;
 }
 
 /**
@@ -31,7 +31,7 @@ export interface EncryptedData {
 }
 
 /**
- * Decryptes the passed encrypted data using the passed password.
+ * Decrypts the passed encrypted data using the passed password.
  * If the password is wrong an error will be returned.
  *
  * @param cipherText the ciphertext that needs to be decrypted.
@@ -67,6 +67,7 @@ export class PersistenceManager {
             persistent: true, // Is ok since it is encrypted
             defaultValue: {},
         });
+        this.checkAutomaticLogin();
     }
 
     /**
@@ -122,8 +123,9 @@ export class PersistenceManager {
 
             // Load config into the respecting manager
             // Instances first as the bundle dependency depend upon the existing instances.
-            this.loadServiceInstances(data.result.instances);
+            const promises = this.loadServiceInstances(data.result.instances);
             this.loadBundleDependencies(data.result.bundleDependencies);
+            this.saveAfterServiceInstancesLoaded(promises);
         }
 
         // Save password, used in save() function
@@ -141,63 +143,48 @@ export class PersistenceManager {
      * and then setting the config of the passed object.
      * @param instances the service instances that should be loaded.
      */
-    private loadServiceInstances(instances: ObjectMap<string, ServiceInstance<unknown, unknown>>) {
-        for (const instanceName in instances) {
-            if (!Object.prototype.hasOwnProperty.call(instances, instanceName)) {
-                continue;
-            }
-            const inst = instances[instanceName];
-            if (inst === undefined) {
-                continue;
-            }
-
+    private loadServiceInstances(instances: ObjectMap<ServiceInstance<unknown, unknown>>): Promise<void>[] {
+        return Object.entries(instances).map(([instanceName, instance]) => {
             // Re-create service instance.
-            const result = this.instances.createServiceInstance(inst.serviceType, instanceName);
+            const result = this.instances.createServiceInstance(instance.serviceType, instanceName);
             if (result.failed) {
-                this.nodecg.log.info(
+                this.nodecg.log.warn(
                     `Couldn't load instance "${instanceName}" from saved configuration: ${result.errorMessage}`,
                 );
-                continue;
+                return Promise.resolve();
             }
 
-            const svc = this.services.getService(inst.serviceType);
+            const svc = this.services.getService(instance.serviceType);
             if (!svc.failed && svc.result.requiresNoConfig) {
-                continue;
+                return Promise.resolve();
             }
 
             // Re-set config of this instance.
             // We can skip the validation here because the config was already validated when it was initially set,
             // before getting saved to disk.
             // This results in faster loading when the validation takes time, e.g. makes HTTP requests.
-            this.instances
-                .updateInstanceConfig(instanceName, inst.config, false)
-                .then((result) => {
+            return this.instances
+                .updateInstanceConfig(instanceName, instance.config, false)
+                .then(async (result) => {
                     if (result.failed) {
-                        this.nodecg.log.info(
-                            `Couldn't load config of instance "${instanceName}" from saved configuration: ${result.errorMessage}.`,
-                        );
+                        throw result.errorMessage;
                     }
                 })
                 .catch((reason) => {
-                    this.nodecg.log.info(
+                    this.nodecg.log.warn(
                         `Couldn't load config of instance "${instanceName}" from saved configuration: ${reason}.`,
                     );
                 });
-        }
+        });
     }
 
     /**
      * Loads all passed bundle dependencies into the framework by setting them in the bundle manager.
      * @param bundles the bundle dependencies that should be set.
      */
-    private loadBundleDependencies(bundles: ObjectMap<string, ServiceDependency<unknown>[]>): void {
-        for (const bundleName in bundles) {
-            if (!Object.prototype.hasOwnProperty.call(bundles, bundleName)) {
-                continue;
-            }
-
-            const deps = bundles[bundleName];
-            deps?.forEach((svcDep) => {
+    private loadBundleDependencies(bundles: ObjectMap<ServiceDependency<unknown>[]>): void {
+        Object.entries(bundles).forEach(([bundleName, deps]) => {
+            deps.forEach((svcDep) => {
                 // Re-setting bundle service dependencies.
                 // We can ignore the case of undefined, because the default is that the bundle doesn't get any service
                 // which is modeled by undefined. We are assuming that there was nobody setting it to something different.
@@ -209,7 +196,7 @@ export class PersistenceManager {
                     }
                 }
             });
-        }
+        });
     }
 
     /**
@@ -221,7 +208,7 @@ export class PersistenceManager {
             return;
         }
 
-        // Organise all data that will be encrypted into a single object.
+        // Organize all data that will be encrypted into a single object.
         const data: PersistentData = {
             instances: this.getServiceInstances(),
             bundleDependencies: this.bundles.getBundleDependencies(),
@@ -236,25 +223,86 @@ export class PersistenceManager {
      * Creates a copy of all service instances without the service clients, because those
      * shouldn't be serialized and don't need to be stored in the encrypted config file.
      */
-    private getServiceInstances(): ObjectMap<string, ServiceInstance<unknown, unknown>> {
+    private getServiceInstances(): ObjectMap<ServiceInstance<unknown, unknown>> {
         const instances = this.instances.getServiceInstances();
-        const copy: ObjectMap<string, ServiceInstance<unknown, unknown>> = {};
+        const copy: ObjectMap<ServiceInstance<unknown, unknown>> = {};
 
-        for (const instName in instances) {
-            if (!Object.prototype.hasOwnProperty.call(instances, instName)) {
-                continue;
-            }
-
-            const instance = instances[instName];
-            if (instance) {
-                copy[instName] = {
-                    serviceType: instance?.serviceType,
-                    config: instance?.config,
-                    client: undefined,
-                };
-            }
-        }
+        Object.entries(instances).forEach(([instName, instance]) => {
+            copy[instName] = {
+                serviceType: instance.serviceType,
+                config: instance.config,
+                client: undefined,
+            };
+        });
 
         return copy;
+    }
+
+    /**
+     * Saves the current configuration after all service instances have loaded.
+     * @param promises the promises of the service instances
+     */
+    private async saveAfterServiceInstancesLoaded(promises: Promise<void>[]) {
+        // We want to ignore errors because if a client in one instance cannot be created we still want to save the current state.
+        const promisesWithoutErrs = promises.map((prom) => new Promise((resolve) => prom.then(resolve).catch(resolve)));
+
+        // Wait till all promises either are done or have failed.
+        await Promise.all(promisesWithoutErrs);
+
+        this.nodecg.log.info("Finished creating service instances from stored configuration.");
+        this.save();
+    }
+
+    /**
+     * Checks whether automatic login is setup and enabled. If yes it will do it using {@link PersistenceManager.setupAutomaticLogin}.
+     */
+    private checkAutomaticLogin(): void {
+        if (this.nodecg.bundleConfig.automaticLogin?.enabled === undefined) {
+            return; // Not configured
+        }
+
+        // If enabled isn't undefined the JSON schema guarantees that enabled is a boolean and password is a string
+        const enabled: boolean = this.nodecg.bundleConfig.automaticLogin.enabled;
+        const password: string = this.nodecg.bundleConfig.automaticLogin.password;
+
+        if (enabled === false) {
+            // We inform the user that automatic login is setup but not activated because having the ability
+            // to disable it by setting the enabled flag to false is meant for temporary cases.
+            // If automatic login is permanently not used the user should remove the password from the config
+            // to regain the advantages of data-at-rest encryption which are slashed when the password is also stored on disk.
+            this.nodecg.log.warn("Automatic login is setup but disabled.");
+            return;
+        }
+
+        this.setupAutomaticLogin(password);
+    }
+
+    /**
+     * Setups everything needed to automatically login using the provided password after nodecg has loaded.
+     */
+    private setupAutomaticLogin(password: string): void {
+        // We need to do the login after all bundles have been loaded because when loading these might add bundle dependencies
+        // or even register services which we need to load nodecg-io.
+        // There is no official way to wait for nodecg to be done loading so we use more or less a hack to find that out:
+        // When we declare the replicant here we will trigger a change event with a empty array.
+        // Once nodecg is done loading all bundles it'll assign a array of bundles that were loaded to this replicant
+        // So if we want to wait for nodecg to be loaded we can watch for changes on this replicant and
+        // if we get a non-empty array it means that nodecg has finished loading.
+        this.nodecg.Replicant<unknown[]>("bundles", "nodecg").on("change", async (bundles) => {
+            if (bundles.length > 0) {
+                try {
+                    this.nodecg.log.info("Attempting to automatically login...");
+                    const loadResult = await this.load(password);
+
+                    if (!loadResult.failed) {
+                        this.nodecg.log.info("Automatic login successful.");
+                    } else {
+                        throw loadResult.errorMessage;
+                    }
+                } catch (err) {
+                    this.nodecg.log.error(`Failed to automatically login: ${err}`);
+                }
+            }
+        });
     }
 }
