@@ -1,8 +1,8 @@
-import { PersistentData, EncryptedData, decryptData } from "nodecg-io-core/extension/persistenceManager";
 import { EventEmitter } from "events";
-import { ObjectMap, ServiceInstance, ServiceDependency, Service } from "nodecg-io-core/extension/service";
-import { isLoaded } from "./authentication";
 import { PasswordMessage } from "nodecg-io-core/extension/messageManager";
+import { decryptData, EncryptedData, PersistentData } from "nodecg-io-core/extension/persistenceManager";
+import { ObjectMap, Service, ServiceDependency, ServiceInstance } from "nodecg-io-core/extension/service";
+import { authService } from "./authService";
 
 const encryptedData = nodecg.Replicant<EncryptedData>("encryptedConfig");
 let services: Service<unknown, never>[] | undefined;
@@ -130,7 +130,7 @@ async function fetchServices() {
 }
 
 async function loadFramework(): Promise<boolean> {
-    if (await isLoaded()) return true;
+    if (await authService.isLoaded()) return true;
 
     try {
         await nodecg.sendMessage("load", { password });

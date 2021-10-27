@@ -1,0 +1,32 @@
+* {
+    box-sizing: border-box;
+}
+
+html {
+    overflow-y: unset !important;
+}
+
+body {
+    margin: 0;
+}
+
+#app {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color: white;
+    background-color: transparent;
+}
+
+div.v-application {
+    background-color: transparent;
+}
+
+/* Prevent unneccesary y-scrollbar */
+.v-application--wrap {
+    min-height: unset !important;
+}
+
+.center {
+    display: flex;
+    justify-content: center;
+}
