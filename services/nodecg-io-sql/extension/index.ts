@@ -1,14 +1,15 @@
 import { NodeCG } from "nodecg-types/types/server";
-import { Result, emptySuccess, success, ServiceBundle, error } from "nodecg-io-core";
+import { Result, emptySuccess, success, ServiceBundle, error, Logger } from "nodecg-io-core";
 import { Knex, knex } from "knex";
 
 // PG connection string is currently unsupported
 export interface SQLConfig {
     client: string;
+    logger: Logger;
     connection: Record<string, unknown>;
 }
 
-export type SQLCLient = Knex;
+export type SQLClient = Knex;
 
 module.exports = (nodecg: NodeCG) => {
     new SQLService(nodecg, "sql", __dirname, "../schema.json").register();
@@ -34,14 +35,14 @@ class SQLService extends ServiceBundle<SQLConfig, Knex> {
         return emptySuccess();
     }
 
-    async createClient(config: SQLConfig): Promise<Result<Knex>> {
+    async createClient(config: SQLConfig, logger: Logger): Promise<Result<Knex>> {
         const knexInstance = knex(config);
-        this.nodecg.log.info("Successfully created sql client.");
+        logger.info("Successfully created sql client.");
         return success(knexInstance);
     }
 
-    stopClient(client: Knex): void {
+    stopClient(client: Knex, logger: Logger): void {
         client.destroy();
-        this.nodecg.log.info("Successfully stopped sql client.");
+        logger.info("Successfully stopped sql client.");
     }
 }

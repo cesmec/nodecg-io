@@ -1,7 +1,18 @@
 {
     "name": "nodecg-io-dashboard",
-    "version": "0.2.0",
-    "private": true,
+    "version": "0.3.0",
+    "description": "Dashboard that is used to manage your nodecg-io configuration.",
+    "homepage": "https://nodecg.io/RELEASE",
+    "author": {
+        "name": "CodeOverflow team",
+        "url": "https://github.com/codeoverflow-org"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/codeoverflow-org/nodecg-io.git",
+        "directory": "nodecg-io-core/dashboard"
+    },
+    "license": "MIT",
     "scripts": {
         "serve": "vue-cli-service serve",
         "build": "vue-cli-service build",
@@ -20,8 +31,8 @@
     },
     "devDependencies": {
         "@types/webfontloader": "^1.0.0",
-        "@typescript-eslint/eslint-plugin": "^5.4.0",
-        "@typescript-eslint/parser": "^5.4.0",
+        "@typescript-eslint/eslint-plugin": "^5.3.1",
+        "@typescript-eslint/parser": "^5.2.0",
         "@vue/cli-plugin-babel": "^5.0.0-rc.0",
         "@vue/cli-plugin-eslint": "^5.0.0-rc.0",
         "@vue/cli-plugin-typescript": "^5.0.0-rc.0",

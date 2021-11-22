@@ -19,6 +19,10 @@ node_modules/
 # Coverage reports by jest
 coverage
 
+# Dashboard webpack
+services/nodecg-io-debug/dashboard/dist
+!services/nodecg-io-debug/webpack.config.js
+
 # Editor configuration
 .idea/
 .vscode/*
