@@ -20,7 +20,7 @@ import Services from "@/views/Services.vue";
 import { authService } from "@/services/authService";
 
 export default defineComponent({
-    name: "Dashboard",
+    name: "nodecg-io-dashboard",
     components: {
         Auth,
         Services,

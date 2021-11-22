@@ -8,7 +8,7 @@
 import { defineComponent } from "vue";
 
 export default defineComponent({
-    name: "Services",
+    name: "nodecg-io-services",
 });
 </script>
 

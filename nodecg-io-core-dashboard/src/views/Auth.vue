@@ -47,7 +47,7 @@ import { authService } from "@/services/authService";
 import { isPasswordSet, setPassword } from "@/services/crypto";
 
 export default defineComponent({
-    name: "Auth",
+    name: "nodecg-io-auth",
     data() {
         return {
             firstStartup: false,
