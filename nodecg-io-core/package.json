@@ -1,6 +1,6 @@
 {
     "name": "nodecg-io-core",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "description": "The core of nodecg-io. Connects everything up.",
     "homepage": "https://nodecg.io/RELEASE",
     "author": {
@@ -32,12 +32,6 @@
     ],
     "nodecg": {
         "compatibleRange": "^1.1.1",
-        "mount": [
-            {
-                "directory": "../node_modules",
-                "endpoint": "modules"
-            }
-        ],
         "dashboardPanels": [
             {
                 "name": "nodecg-io",
@@ -52,14 +46,14 @@
     "devDependencies": {
         "@types/crypto-js": "^4.0.2",
         "@types/jest": "^27.0.2",
-        "@types/node": "^16.11.6",
+        "@types/node": "^16.11.7",
         "jest": "^27.3.1",
-        "nodecg-types": "^1.8.2",
+        "nodecg-types": "^1.8.3",
         "typescript": "^4.4.4",
         "ts-jest": "^27.0.7"
     },
     "dependencies": {
-        "ajv": "^8.6.3",
+        "ajv": "^8.8.1",
         "crypto-js": "^4.1.1",
         "tslib": "^2.3.1"
     }

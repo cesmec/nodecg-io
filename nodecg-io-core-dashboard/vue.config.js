@@ -8,8 +8,12 @@ module.exports = {
     publicPath: "./",
 
     transpileDependencies: ["vuetify"],
-    
+
     configureWebpack: {
-        plugins: [new MonacoWebpackPlugin()],
+        plugins: [
+            new MonacoWebpackPlugin({
+                languages: ["text", "json"],
+            }),
+        ],
     },
 };

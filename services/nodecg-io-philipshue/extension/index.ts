@@ -2,8 +2,6 @@ import { NodeCG } from "nodecg-types/types/server";
 import { Result, emptySuccess, success, error, ServiceBundle, ObjectMap } from "nodecg-io-core";
 import { v4 as ipv4 } from "is-ip";
 import { v3 } from "node-hue-api";
-// Only needed for type because of that it is "unused" but still needed
-// eslint-disable-next-line @typescript-eslint/no-unused-vars-experimental
 import HueApi = require("node-hue-api/lib/api/Api");
 const { api, discovery } = v3;
 
@@ -30,7 +28,7 @@ class PhilipsHueService extends ServiceBundle<PhilipsHueServiceConfig, PhilipsHu
         super(nodecg, name, ...pathSegments);
         this.discoverBridges()
             .then((bridgePresets) => (this.presets = bridgePresets))
-            .catch((err) => this.nodecg.log.error(`Failed to discover local bridges: ${err}`));
+            .catch((err) => nodecg.log.error(`Failed to discover local bridges: ${err}`));
     }
 
     async validateConfig(config: PhilipsHueServiceConfig): Promise<Result<void>> {

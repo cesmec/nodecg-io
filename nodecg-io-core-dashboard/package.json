@@ -1,6 +1,6 @@
 {
     "name": "nodecg-io-core-dashboard",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "private": true,
     "scripts": {
         "serve": "vue-cli-service serve",
@@ -20,8 +20,8 @@
     },
     "devDependencies": {
         "@types/webfontloader": "^1.0.0",
-        "@typescript-eslint/eslint-plugin": "^5.4.0",
-        "@typescript-eslint/parser": "^5.4.0",
+        "@typescript-eslint/eslint-plugin": "^5.3.1",
+        "@typescript-eslint/parser": "^5.2.0",
         "@vue/cli-plugin-babel": "^5.0.0-rc.0",
         "@vue/cli-plugin-eslint": "^5.0.0-rc.0",
         "@vue/cli-plugin-typescript": "^5.0.0-rc.0",
