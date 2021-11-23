@@ -19,13 +19,6 @@ class AuthService extends EventEmitter {
         nodecg.socket.on("connect", () => {
             // Give nodecg 200ms to fully connect so everything is usable.
             setTimeout(() => {
-                /*// If a password has been entered previously try to directly login using it.
-                if (inputPassword.value !== "") {
-                    loadFramework();
-                } else {
-                    updateLoadedStatus();
-                    updateFirstStartupLabel();
-                }*/
                 this.isLoaded();
                 this.emit("connect");
             }, 200);
@@ -34,7 +27,8 @@ class AuthService extends EventEmitter {
 
     async isLoaded(): Promise<boolean> {
         return new Promise<boolean>((resolve) => {
-            const fallback = setTimeout(() => resolve(false), 5000); // Fallback in case connection gets lost.
+            // Fallback in case connection gets lost.
+            const fallback = setTimeout(() => resolve(false), 5000);
             nodecg.sendMessage("isLoaded", (_err, res) => {
                 resolve(res);
                 clearTimeout(fallback);
@@ -47,7 +41,8 @@ class AuthService extends EventEmitter {
 
     async isFirstStartup(): Promise<boolean> {
         return new Promise<boolean>((resolve) => {
-            const fallback = setTimeout(() => resolve(false), 5000); // Fallback in case connection gets lost.
+            // Fallback in case connection gets lost.
+            const fallback = setTimeout(() => resolve(false), 5000);
             nodecg.sendMessage("isFirstStartup", (_err, res) => {
                 resolve(res);
                 clearTimeout(fallback);
