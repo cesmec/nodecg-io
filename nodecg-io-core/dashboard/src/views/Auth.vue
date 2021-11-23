@@ -47,7 +47,7 @@ import { isPasswordSet, setPassword } from "@/services/crypto";
 import { defineComponent } from "vue";
 
 export default defineComponent({
-    name: "Auth",
+    name: "AppAuth",
     data() {
         return {
             firstStartup: false,

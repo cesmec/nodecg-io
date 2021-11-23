@@ -30,3 +30,7 @@ div.v-application {
     display: flex;
     justify-content: center;
 }
+
+.container {
+    padding: 5px;
+}
