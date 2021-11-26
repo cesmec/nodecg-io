@@ -75,10 +75,12 @@ export async function setPassword(pw: string): Promise<boolean> {
     return true;
 }
 
-export async function sendAuthenticatedMessage<V>(messageName: string, message: Partial<PasswordMessage>): Promise<V> {
+export async function sendAuthenticatedMessage<Msg extends PasswordMessage, V>(
+    messageName: string,
+    message: Omit<Msg, "password">,
+): Promise<V> {
     if (password === undefined) throw "No password available";
-    const msgWithAuth = Object.assign({}, message);
-    msgWithAuth.password = password;
+    const msgWithAuth = Object.assign({ password }, message) as Msg;
     return await nodecg.sendMessage(messageName, msgWithAuth);
 }
 

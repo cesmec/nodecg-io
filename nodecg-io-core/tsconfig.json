@@ -1,4 +1,4 @@
 {
-    "exclude": ["dashboard", "dashboard-src", "extension/__tests__"],
+    "exclude": ["dashboard", "extension/__tests__"],
     "extends": "../tsconfig.common.json"
 }
