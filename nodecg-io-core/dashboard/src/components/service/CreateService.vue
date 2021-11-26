@@ -10,12 +10,20 @@
                         <v-col cols="12">
                             <v-text-field v-model="name" label="Name" required></v-text-field>
                         </v-col>
-                        <v-col cols="12">
-                            <v-text-field v-model="type" label="Type" required></v-text-field>
-                        </v-col>
                         <!--<v-col cols="12">
                             <v-select v-model="type" :items="['discord', 'twitch']" label="Type" required></v-select>
                         </v-col>-->
+                        <v-col cols="12">
+                            <select v-model="type" style="background: white">
+                                <option
+                                    v-for="service in services"
+                                    :value="service.serviceType"
+                                    :key="service.serviceType"
+                                >
+                                    {{ service.serviceType }}
+                                </option>
+                            </select>
+                        </v-col>
                     </v-row>
                 </v-container>
             </v-card-text>
@@ -26,7 +34,7 @@
                     color="primary"
                     text
                     @click="
-                        $emit('save', { name, type });
+                        $emit('save', name, type);
                         open = false;
                     "
                     >Save</v-btn
@@ -37,10 +45,17 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { Service } from "nodecg-io-core/extension/service";
+import { defineComponent, PropType } from "vue";
 
 export default defineComponent({
     name: "CreateService",
+    props: {
+        services: {
+            type: Array as PropType<Service<unknown, unknown>[]>,
+            required: true,
+        },
+    },
     data() {
         return {
             name: "",
