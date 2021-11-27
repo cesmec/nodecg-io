@@ -14,7 +14,7 @@
 </template>
 
 <script lang="ts">
-import { authService } from "@/services/authService";
+import { authService } from "@/utils/authService";
 import Auth from "@/views/Auth.vue";
 import Config from "@/views/Config.vue";
 import { defineComponent } from "vue";

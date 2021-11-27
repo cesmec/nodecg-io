@@ -6,8 +6,8 @@
 </template>
 
 <script lang="ts">
+import ServiceGrid from "@/components/services/ServiceGrid.vue";
 import { defineComponent } from "vue";
-import ServiceGrid from "@/components/service/ServiceGrid.vue";
 
 export default defineComponent({
     name: "AppConfig",

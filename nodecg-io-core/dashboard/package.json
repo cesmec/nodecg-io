@@ -14,7 +14,6 @@
     },
     "license": "MIT",
     "scripts": {
-        "serve": "vue-cli-service serve",
         "build": "vue-cli-service build",
         "lint": "vue-cli-service lint",
         "watch": "vue-cli-service build --watch"
@@ -26,7 +25,7 @@
         "nodecg-io-core": "^0.2.0",
         "roboto-fontface": "*",
         "vue": "^3.0.0",
-        "vuetify": "^3.0.0-alpha.11",
+        "vuetify": "^3.0.0-alpha.12",
         "webfontloader": "^1.0.0"
     },
     "devDependencies": {

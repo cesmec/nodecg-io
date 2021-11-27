@@ -1,24 +1,18 @@
-# dashboard
+# nodecg-io dashboard
 
-## Project setup
+## Compiles and hot-reloads for development
 ```
-npm install
+npm run watch
 ```
+When running in watch mode, the dashboard should be served by nodecg as those functions are expected to be available.
+This command automatically recompiles on file changes which are then available after a reload of the website and usually does not require a restart of nodecg.
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
-
-### Compiles and minifies for production
+## Compiles and minifies for production
 ```
 npm run build
 ```
 
-### Lints and fixes files
+## Lints and fixes files
 ```
 npm run lint
 ```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).

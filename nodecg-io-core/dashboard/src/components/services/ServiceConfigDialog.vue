@@ -9,35 +9,37 @@
             </v-card-subtitle>
             <v-card-text>
                 <div ref="editorParent" class="editor-container"></div>
-                <span class="error">{{ error }}</span>
             </v-card-text>
             <v-card-actions>
+                <span class="error">{{ error }}</span>
                 <v-spacer></v-spacer>
-                <v-btn color="gray darken-1" text @click="open = false">Close</v-btn>
-                <v-btn color="primary" text @click="save">Save</v-btn>
+                <v-btn color="gray darken-1" text @click="close">Close</v-btn>
+                <v-btn color="secondary" text @click="save">Save</v-btn>
             </v-card-actions>
         </v-card>
     </v-dialog>
 </template>
 
 <script lang="ts">
-import { serviceManager } from "@/services/serviceManager";
+import { injectionKeys } from "@/utils/constants";
 import { objectDeepCopy } from "@/utils/deepCopy";
 import * as monaco from "monaco-editor";
 import { ObjectMap, Service, ServiceInstance } from "nodecg-io-core/extension/service";
-import { defineComponent, ref } from "vue";
+import { defineComponent, inject, ref } from "vue";
 
-//monaco works better when it's not a vue Proxy object
+// monaco works better when it's not in a vue Proxy object
+// however, doing it this way limits it to only one instance
 let editor: monaco.editor.IStandaloneCodeEditor | undefined = undefined;
 
 export default defineComponent({
-    name: "ServiceConfig",
+    name: "ServiceConfigDialog",
     setup() {
         const editorParent = ref<HTMLElement>();
         const editorElement = ref<HTMLElement>();
         return {
             editorParent,
             editorElement,
+            serviceManager: inject(injectionKeys.serviceManager),
         };
     },
     data() {
@@ -50,22 +52,25 @@ export default defineComponent({
         };
     },
     watch: {
-        async open(newValue: boolean, oldValue: boolean) {
-            //wait one update cycle before accessing dom refs
-            await Promise.resolve();
+        async open(newValue: boolean) {
             this.error = "";
 
-            console.log("open change", newValue);
-            if (newValue !== oldValue && this.editorParent) {
-                if (newValue) {
-                    this.editorElement ??= document.createElement("div");
-                    this.editorParent.appendChild(this.editorElement);
-                    this.updateEditor(this.editorElement);
-                } else {
-                    this.editorElement?.remove();
-                }
+            // wait one update cycle before accessing dom refs
+            await Promise.resolve();
+
+            if (newValue && this.editorParent) {
+                // manage monaco editor element manually instead of letting vue handle it
+                this.editorElement ??= document.createElement("div");
+                this.editorParent.appendChild(this.editorElement);
+                this.updateEditor(this.editorElement);
             }
         },
+    },
+    mounted() {
+        window.addEventListener("resize", this.resize);
+    },
+    unmounted() {
+        window.removeEventListener("resize", this.resize);
     },
     methods: {
         show(instanceName: string, instance: ServiceInstance<unknown, unknown>, service: Service<unknown, unknown>) {
@@ -82,7 +87,7 @@ export default defineComponent({
             this.error = "";
             try {
                 const config = JSON.parse(this.config);
-                await serviceManager.updateInstanceConfig(this.instanceName, config);
+                await this.serviceManager?.updateInstanceConfig(this.instanceName, config);
                 this.close();
             } catch (error) {
                 console.log("config save failed", error);
@@ -127,28 +132,27 @@ export default defineComponent({
                 schemas: [],
             };
         },
+        resize() {
+            if (this.editorElement && this.editorParent && this.editorElement.parentElement === this.editorParent) {
+                editor?.layout();
+            }
+        },
     },
 });
 </script>
 
 <style>
-.editor-container,
+.editor-container {
+    width: 100%;
+    height: calc(100vh - 150px);
+}
+
 .editor-container > * {
     width: 100%;
-    height: 500px;
+    height: 100%;
 }
 
 .error {
     color: red;
-}
-
-/* todo: remove temp fix */
-.v-dialog .v-overlay__content {
-    max-width: none !important;
-    max-height: none !important;
-}
-
-.v-card--variant-contained {
-    height: 100%;
 }
 </style>

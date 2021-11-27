@@ -42,8 +42,8 @@
 </template>
 
 <script lang="ts">
-import { authService } from "@/services/authService";
-import { isPasswordSet, setPassword } from "@/services/crypto";
+import { authService } from "@/utils/authService";
+import { isPasswordSet, setPassword } from "@/utils/crypto";
 import { defineComponent } from "vue";
 
 export default defineComponent({
