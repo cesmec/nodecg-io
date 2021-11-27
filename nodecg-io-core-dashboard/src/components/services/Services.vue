@@ -9,52 +9,57 @@
                 :key="name"
                 @click="showConfig(name)"
             >
-                <v-card-title class="space-between">
-                    <span>{{ name }}</span>
-                    <v-btn class="btn-delete" @click.stop="deleteInstance(name)">
-                        <v-icon>mdi-delete</v-icon>
-                    </v-btn>
+                <v-card-title class="instance-title">
+                    <span class="ellipsis">{{ name }}</span>
+                    <v-btn color="error" icon="mdi-delete" size="small" @click.stop="deleteInstance(name)" />
                 </v-card-title>
                 <v-card-subtitle>{{ instance.serviceType }}</v-card-subtitle>
             </v-card>
         </GridView>
-        <CreateService ref="createDialog" @save="saveNewInstance" :services="services"></CreateService>
-        <ServiceConfig ref="configDialog"></ServiceConfig>
-        <v-btn color="primary" elevation="2" fab @click="openCreateDialog">
-            <v-icon>mdi-plus</v-icon>
-        </v-btn>
+        <CreateDialog ref="createDialog" :services="services" />
+        <ConfigDialog ref="configDialog" />
+        <v-btn
+            class="btn-create"
+            color="secondary"
+            elevation="2"
+            icon="mdi-plus"
+            size="large"
+            @click="openCreateDialog"
+        />
     </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from "vue";
-import { config } from "@/services/crypto";
-import { serviceManager } from "@/services/serviceManager";
 import GridView from "@/components/GridView.vue";
-import CreateService from "@/components/service/CreateService.vue";
-import ServiceConfig from "@/components/service/ServiceConfig.vue";
+import { injectionKeys } from "@/utils/constants";
+import { config } from "@/utils/crypto";
+import { ServiceManager } from "@/utils/serviceManager";
 import { ObjectMap, Service, ServiceInstance } from "nodecg-io-core/extension/service";
+import { defineComponent, provide, ref } from "vue";
+import ConfigDialog from "./ConfigDialog.vue";
+import CreateDialog from "./CreateDialog.vue";
 
 export default defineComponent({
     name: "nodecg-io-services",
     components: {
         GridView,
-        CreateService,
-        ServiceConfig,
+        CreateDialog,
+        ConfigDialog,
     },
     setup() {
-        const createDialog = ref<InstanceType<typeof CreateService>>();
-        const configDialog = ref<InstanceType<typeof ServiceConfig>>();
+        const serviceManager = new ServiceManager();
+        provide(injectionKeys.serviceManager, serviceManager);
+
         return {
-            createDialog,
-            configDialog,
+            serviceManager,
+            createDialog: ref<InstanceType<typeof CreateDialog>>(),
+            configDialog: ref<InstanceType<typeof ConfigDialog>>(),
         };
     },
     data() {
-        const instances = config.data?.instances || {};
         return {
             search: "",
-            instances,
+            instances: config.data?.instances ?? {},
             services: [] as Service<unknown, unknown>[],
         };
     },
@@ -77,7 +82,7 @@ export default defineComponent({
         config.onChange((data) => {
             this.instances = data.instances;
         });
-        serviceManager.getServices().then((services) => {
+        this.serviceManager.getServices().then((services) => {
             this.services = services;
         });
     },
@@ -85,25 +90,17 @@ export default defineComponent({
         openCreateDialog() {
             this.createDialog?.show();
         },
-        async saveNewInstance(name: string, type: string) {
-            try {
-                await serviceManager.createService(type, name);
-                console.log("created", name, type);
-                //this.instances[name] = { serviceType: type, config: "", client: "" };
-            } catch (error) {
-                console.log("creation failed", error);
-            }
-        },
         showConfig(instanceName: string) {
             const instance = this.instances[instanceName];
-            const service = this.services.find((svc) => svc.serviceType === instance.serviceType);
+            const service = this.services.find((svc) => svc.serviceType === instance?.serviceType);
             if (instance && service) {
                 this.configDialog?.show(instanceName, instance, service);
             }
         },
         async deleteInstance(instanceName: string) {
+            //todo: confirm
             try {
-                await serviceManager.deleteInstance(instanceName);
+                await this.serviceManager.deleteInstance(instanceName);
             } catch (error) {
                 console.log("delete failed", error);
             }
@@ -117,9 +114,22 @@ export default defineComponent({
     margin: 10px;
     min-height: 100px;
     min-width: 200px;
+    max-width: 400px;
 }
 
-.space-between {
+.instance-title {
     justify-content: space-between;
+}
+
+.ellipsis {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.btn-create {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
 }
 </style>

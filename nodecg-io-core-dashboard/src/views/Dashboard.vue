@@ -14,10 +14,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { authService } from "@/utils/authService";
 import Auth from "@/views/Auth.vue";
 import Config from "@/views/Config.vue";
-import { authService } from "@/services/authService";
+import { defineComponent } from "vue";
 
 export default defineComponent({
     name: "nodecg-io-dashboard",

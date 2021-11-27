@@ -29,32 +29,30 @@
             </v-card-text>
             <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn color="gray darken-1" text @click="open = false">Close</v-btn>
-                <v-btn
-                    color="primary"
-                    text
-                    @click="
-                        $emit('save', name, type);
-                        open = false;
-                    "
-                    >Save</v-btn
-                >
+                <v-btn color="gray darken-1" text @click="close">Close</v-btn>
+                <v-btn color="secondary" text @click="saveNewInstance">Create</v-btn>
             </v-card-actions>
         </v-card>
     </v-dialog>
 </template>
 
 <script lang="ts">
+import { injectionKeys } from "@/utils/constants";
 import { Service } from "nodecg-io-core/extension/service";
-import { defineComponent, PropType } from "vue";
+import { defineComponent, inject, PropType } from "vue";
 
 export default defineComponent({
-    name: "create-service",
+    name: "nodecg-io-service-create-dialog",
     props: {
         services: {
             type: Array as PropType<Service<unknown, unknown>[]>,
             required: true,
         },
+    },
+    setup() {
+        return {
+            serviceManager: inject(injectionKeys.serviceManager),
+        };
     },
     data() {
         return {
@@ -66,6 +64,19 @@ export default defineComponent({
     methods: {
         show() {
             this.open = true;
+        },
+        close() {
+            this.open = false;
+            this.name = "";
+            this.type = "";
+        },
+        async saveNewInstance() {
+            try {
+                await this.serviceManager?.createService(this.type, this.name);
+                this.close();
+            } catch (error) {
+                console.log("creation failed", error);
+            }
         },
     },
 });

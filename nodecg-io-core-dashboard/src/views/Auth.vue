@@ -42,9 +42,9 @@
 </template>
 
 <script lang="ts">
+import { authService } from "@/utils/authService";
+import { isPasswordSet, setPassword } from "@/utils/crypto";
 import { defineComponent } from "vue";
-import { authService } from "@/services/authService";
-import { isPasswordSet, setPassword } from "@/services/crypto";
 
 export default defineComponent({
     name: "nodecg-io-auth",

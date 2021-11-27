@@ -6,8 +6,8 @@
 </template>
 
 <script lang="ts">
+import Services from "@/components/services/Services.vue";
 import { defineComponent } from "vue";
-import Services from "@/components/service/Services.vue";
 
 export default defineComponent({
     name: "nodecg-io-config",

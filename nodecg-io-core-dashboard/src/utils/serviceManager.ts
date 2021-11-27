@@ -6,7 +6,7 @@ import {
 import { Service } from "nodecg-io-core/extension/service";
 import { sendAuthenticatedMessage } from "./crypto";
 
-class ServiceManager {
+export class ServiceManager {
     getServices(): Promise<Service<unknown, unknown>[]> {
         return nodecg.sendMessage("getServices");
     }
@@ -31,5 +31,3 @@ class ServiceManager {
         });
     }
 }
-
-export const serviceManager = new ServiceManager();
