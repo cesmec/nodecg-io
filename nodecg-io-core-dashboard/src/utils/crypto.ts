@@ -1,8 +1,8 @@
-import { PersistentData, EncryptedData, decryptData } from "nodecg-io-core/extension/persistenceManager";
 import { EventEmitter } from "events";
-import { ObjectMap, ServiceInstance, ServiceDependency, Service } from "nodecg-io-core/extension/service";
-import { authService } from "./authService";
 import { PasswordMessage } from "nodecg-io-core/extension/messageManager";
+import { decryptData, EncryptedData, PersistentData } from "nodecg-io-core/extension/persistenceManager";
+import { ObjectMap, Service, ServiceDependency, ServiceInstance } from "nodecg-io-core/extension/service";
+import { authService } from "./authService";
 
 const encryptedData = nodecg.Replicant<EncryptedData>("encryptedConfig");
 let services: Service<unknown, never>[] | undefined;

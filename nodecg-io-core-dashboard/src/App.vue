@@ -1,26 +1,20 @@
 <template>
     <v-app>
         <v-main>
-            <Dashboard />
+            <Auth />
         </v-main>
     </v-app>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import Dashboard from "@/views/Dashboard.vue";
+import Auth from "@/views/Auth.vue";
 import "@/assets/global.css";
 
 export default defineComponent({
     name: "App",
     components: {
-        Dashboard,
-    },
-
-    data() {
-        return {
-            //
-        };
+        Auth,
     },
 });
 </script>

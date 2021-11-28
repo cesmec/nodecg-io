@@ -8,6 +8,7 @@ interface AuthServiceEvents {
 
 interface AuthService {
     on<K extends keyof AuthServiceEvents>(type: K, listener: (...args: AuthServiceEvents[K]) => void): this;
+    off<K extends keyof AuthServiceEvents>(type: K, listener: (...args: AuthServiceEvents[K]) => void): this;
     emit<K extends keyof AuthServiceEvents>(type: K, ...args: AuthServiceEvents[K]): boolean;
 }
 
@@ -26,28 +27,13 @@ class AuthService extends EventEmitter {
     }
 
     async isLoaded(): Promise<boolean> {
-        return new Promise<boolean>((resolve) => {
-            // Fallback in case connection gets lost.
-            const fallback = setTimeout(() => resolve(false), 5000);
-            nodecg.sendMessage("isLoaded", (_err, res) => {
-                resolve(res);
-                clearTimeout(fallback);
-            });
-        }).then((loaded) => {
-            this.emit("loadedChange", loaded);
-            return loaded;
-        });
+        const loaded: boolean = await nodecg.sendMessage("isLoaded");
+        this.emit("loadedChange", loaded);
+        return loaded;
     }
 
-    async isFirstStartup(): Promise<boolean> {
-        return new Promise<boolean>((resolve) => {
-            // Fallback in case connection gets lost.
-            const fallback = setTimeout(() => resolve(false), 5000);
-            nodecg.sendMessage("isFirstStartup", (_err, res) => {
-                resolve(res);
-                clearTimeout(fallback);
-            });
-        });
+    isFirstStartup(): Promise<boolean> {
+        return nodecg.sendMessage("isFirstStartup");
     }
 }
 

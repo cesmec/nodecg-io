@@ -14,6 +14,7 @@
                             <v-select v-model="type" :items="['discord', 'twitch']" label="Type" required></v-select>
                         </v-col>-->
                         <v-col cols="12">
+                            <!-- todo: use v-select when available -->
                             <select v-model="type" style="background: white">
                                 <option
                                     v-for="service in services"

@@ -1,126 +1,56 @@
 <template>
-    <v-card class="auth-card" elevation="2">
-        <v-card-title>
-            <img class="logo" alt="nodecg-io header" src="header_white.png" />
-        </v-card-title>
-        <v-card-text>
-            <form @submit="submitForm" ref="form">
-                <v-container>
-                    <v-row>
-                        <v-col>
-                            <p v-if="firstStartup">
-                                This seems to be your first startup of nodecg-io. Please choose a password which will be
-                                used to encrypt all your credentials.
-                            </p>
-                            <p v-else>Please log in to manage nodecg-io</p>
-                        </v-col>
-                    </v-row>
-                    <v-row>
-                        <v-col>
-                            <v-text-field
-                                label="Password"
-                                name="inputPassword"
-                                type="password"
-                                :rules="rules"
-                                :error-messages="passwordErrors"
-                                v-model="password"
-                                hide-details="auto"
-                            />
-                        </v-col>
-                    </v-row>
-                    <v-row>
-                        <v-col>
-                            <v-btn class="button" @click="submitForm" block color="secondary">
-                                {{ firstStartup ? "Setup" : "Login" }}
-                            </v-btn>
-                        </v-col>
-                    </v-row>
-                </v-container>
-            </form>
-        </v-card-text>
-    </v-card>
+    <div v-if="loggedIn">
+        <Dashboard />
+    </div>
+    <div v-else class="login-container">
+        <Login />
+    </div>
 </template>
 
 <script lang="ts">
 import { authService } from "@/utils/authService";
-import { isPasswordSet, setPassword } from "@/utils/crypto";
+import Login from "@/views/Login.vue";
+import Dashboard from "@/views/Dashboard.vue";
 import { defineComponent } from "vue";
 
 export default defineComponent({
     name: "nodecg-io-auth",
+    components: {
+        Login,
+        Dashboard,
+    },
     data() {
         return {
-            firstStartup: false,
-            password: "",
-            passwordErrors: [] as string[],
-            rules: [(value: string): string | true => !!value || "Required"],
+            loaded: false,
+            loggedIn: false,
         };
     },
     mounted(): void {
-        // Handler for when the socket.io client re-connects which is usually a nodecg restart.
-        authService.on("connect", this.nodecgConnect);
-
-        // Render loaded status for initial load
-        this.updateLoadedStatus();
-        this.updateFirstStartupLabel();
+        authService.isLoaded().then((loaded) => this.loadedChange(loaded));
+        authService.on("loadedChange", this.loadedChange);
+        authService.on("loginChange", this.loginChange);
     },
     unmounted(): void {
-        authService.off("connect", this.nodecgConnect);
+        authService.off("loadedChange", this.loadedChange);
+        authService.off("loginChange", this.loginChange);
     },
     methods: {
-        nodecgConnect(): void {
-            // Give nodecg 200ms to fully connect so everything is usable.
-            setTimeout(() => {
-                // If a password has been entered previously try to directly login using it.
-                if (this.password !== "") {
-                    this.loadFramework();
-                } else {
-                    this.updateLoadedStatus();
-                    this.updateFirstStartupLabel();
-                }
-            }, 200);
+        loginChange(loggedIn: boolean) {
+            this.loggedIn = loggedIn;
         },
-        submitForm(e: Event): void {
-            e.preventDefault();
-            const form = this.$refs.form as HTMLFormElement; // as { validate(): boolean };
-            if (form.reportValidity()) {
-                this.loadFramework();
-            }
-        },
-        async updateLoadedStatus(): Promise<void> {
-            const loaded = await authService.isLoaded();
-
-            const loggedIn = loaded && isPasswordSet();
-            authService.emit("loginChange", loggedIn);
-        },
-        async loadFramework(): Promise<void> {
-            if (await setPassword(this.password)) {
-                this.passwordErrors = [];
-            } else {
-                this.passwordErrors = ["The provided password is incorrect!"];
-            }
-
-            this.updateLoadedStatus();
-        },
-        async updateFirstStartupLabel(): Promise<void> {
-            this.firstStartup = await authService.isFirstStartup();
+        loadedChange(loaded: boolean) {
+            this.loaded = loaded;
         },
     },
 });
 </script>
 
 <style scoped>
-.logo {
-    width: 80%;
-}
-
-.auth-card {
-    min-height: 300px;
-}
-
-form {
+.login-container {
     display: flex;
-    align-items: baseline;
-    justify-content: space-between;
+    flex-direction: column;
+    height: calc(100vh - 30px);
+    align-items: center;
+    justify-content: space-evenly;
 }
 </style>

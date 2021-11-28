@@ -3,14 +3,9 @@ import {
     DeleteServiceInstanceMessage,
     UpdateInstanceConfigMessage,
 } from "nodecg-io-core/extension/messageManager";
-import { Service } from "nodecg-io-core/extension/service";
 import { sendAuthenticatedMessage } from "./crypto";
 
 export class ServiceManager {
-    getServices(): Promise<Service<unknown, unknown>[]> {
-        return nodecg.sendMessage("getServices");
-    }
-
     createService(serviceType: string, instanceName: string) {
         return sendAuthenticatedMessage<CreateServiceInstanceMessage, void>("createServiceInstance", {
             instanceName,

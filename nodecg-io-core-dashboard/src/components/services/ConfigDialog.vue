@@ -14,7 +14,10 @@
                 <span class="error">{{ error }}</span>
                 <v-spacer></v-spacer>
                 <v-btn color="gray darken-1" text @click="close">Close</v-btn>
-                <v-btn color="secondary" text @click="save">Save</v-btn>
+                <v-btn class="btn-save" color="secondary" text @click="save" :disabled="saving">
+                    <v-progress-circular class="save-progress" v-if="saving" indeterminate color="secondary" />
+                    <span v-else>Save</span>
+                </v-btn>
             </v-card-actions>
         </v-card>
     </v-dialog>
@@ -22,7 +25,7 @@
 
 <script lang="ts">
 import { injectionKeys } from "@/utils/constants";
-import { objectDeepCopy } from "@/utils/deepCopy";
+import { objectDeepCopy } from "@/utils/objectUtils";
 import * as monaco from "monaco-editor";
 import { ObjectMap, Service, ServiceInstance } from "nodecg-io-core/extension/service";
 import { defineComponent, inject, ref } from "vue";
@@ -49,13 +52,16 @@ export default defineComponent({
             config: "",
             error: "",
             schema: undefined as ObjectMap<unknown> | undefined,
+            saving: false,
         };
     },
     mounted() {
         window.addEventListener("resize", this.resize);
+        window.addEventListener("keydown", this.keydown);
     },
     unmounted() {
         window.removeEventListener("resize", this.resize);
+        window.removeEventListener("keydown", this.keydown);
     },
     watch: {
         async open(newValue: boolean) {
@@ -81,10 +87,21 @@ export default defineComponent({
         },
         close() {
             this.open = false;
+            this.saving = false;
+        },
+        keydown(e: KeyboardEvent) {
+            if (this.open && e.ctrlKey && e.key === "s") {
+                e.preventDefault();
+                this.save();
+            }
         },
         async save() {
+            if (this.saving) {
+                return;
+            }
             this.config = editor?.getValue() ?? "";
             this.error = "";
+            this.saving = true;
             try {
                 const config = JSON.parse(this.config);
                 await this.serviceManager?.updateInstanceConfig(this.instanceName, config);
@@ -93,6 +110,7 @@ export default defineComponent({
                 console.log("config save failed", error);
                 this.error = error instanceof Error ? error.message : String(error);
             }
+            this.saving = false;
         },
         updateEditor(element: HTMLElement) {
             editor?.getModel()?.dispose();
@@ -150,6 +168,14 @@ export default defineComponent({
 .editor-container > * {
     width: 100%;
     height: 100%;
+}
+
+.btn-save {
+    position: relative;
+}
+
+.save-progress {
+    position: absolute;
 }
 
 .error {

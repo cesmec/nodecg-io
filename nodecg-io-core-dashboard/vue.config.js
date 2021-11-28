@@ -12,7 +12,7 @@ module.exports = {
     configureWebpack: {
         plugins: [
             new MonacoWebpackPlugin({
-                languages: ["text", "json"],
+                languages: ["json"],
             }),
         ],
     },
