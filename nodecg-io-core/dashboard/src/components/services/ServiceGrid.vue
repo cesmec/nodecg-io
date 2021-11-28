@@ -35,8 +35,9 @@ import ServiceConfigDialog from "@/components/services/ServiceConfigDialog.vue";
 import ServiceCreateDialog from "@/components/services/ServiceCreateDialog.vue";
 import { injectionKeys } from "@/utils/constants";
 import { config } from "@/utils/crypto";
+import { filterObjectMap } from "@/utils/objectUtils";
 import { ServiceManager } from "@/utils/serviceManager";
-import { ObjectMap, Service, ServiceInstance } from "nodecg-io-core/extension/service";
+import { ObjectMap, ServiceInstance } from "nodecg-io-core/extension/service";
 import { defineComponent, provide, ref } from "vue";
 
 export default defineComponent({
@@ -60,30 +61,23 @@ export default defineComponent({
         return {
             search: "",
             instances: config.data?.instances ?? {},
-            services: [] as Service<unknown, unknown>[],
+            services: config.data?.services ?? [],
         };
     },
     computed: {
-        filteredInstances() {
+        filteredInstances(): ObjectMap<ServiceInstance<unknown, unknown>> {
             const search = this.search?.toLowerCase() || "";
-            const filtered = {} as ObjectMap<ServiceInstance<unknown, unknown>>;
-            for (const key in this.instances) {
-                if (
-                    Object.prototype.hasOwnProperty.call(this.instances, key) &&
-                    (key.toLowerCase().includes(search) || this.instances[key].serviceType?.includes(search))
-                ) {
-                    filtered[key] = this.instances[key];
-                }
-            }
-            return filtered;
+
+            return filterObjectMap(
+                this.instances,
+                (instance, key) => key.toLowerCase().includes(search) || instance.serviceType?.includes(search),
+            );
         },
     },
-    mounted() {
+    created() {
         config.onChange((data) => {
             this.instances = data.instances;
-        });
-        this.serviceManager.getServices().then((services) => {
-            this.services = services;
+            this.services = data.services;
         });
     },
     methods: {

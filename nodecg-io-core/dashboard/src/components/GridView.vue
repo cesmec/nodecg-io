@@ -14,6 +14,9 @@ export default defineComponent({
 
 <style>
 .grid-view-container {
+    max-height: 100%;
+    overflow: auto;
     display: flex;
+    flex-wrap: wrap;
 }
 </style>

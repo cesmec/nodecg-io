@@ -1,70 +1,45 @@
 <template>
-    <div>
-        <div v-if="loggedIn">
-            <Config />
+    <div class="dashboard-container">
+        <div class="dashboard-content">
+            <ServiceGrid />
         </div>
-        <div v-else class="auth-container">
-            <div class="auth-main">
-                <div>
-                    <Auth />
-                </div>
-            </div>
+        <div class="spacer"></div>
+        <div class="dashboard-content">
+            <BundleGrid />
         </div>
     </div>
 </template>
 
 <script lang="ts">
-import { authService } from "@/utils/authService";
-import Auth from "@/views/Auth.vue";
-import Config from "@/views/Config.vue";
+import BundleGrid from "@/components/bundles/BundleGrid.vue";
+import ServiceGrid from "@/components/services/ServiceGrid.vue";
 import { defineComponent } from "vue";
 
 export default defineComponent({
     name: "AppDashboard",
     components: {
-        Auth,
-        Config,
-    },
-    data() {
-        return {
-            loaded: false,
-            loggedIn: false,
-        };
-    },
-    mounted(): void {
-        authService.isLoaded().then(this.loadedChange);
-        authService.on("loadedChange", this.loadedChange);
-        authService.on("loginChange", this.loginChange);
-    },
-    unmounted(): void {
-        authService.off("loginChange", this.loginChange);
-        authService.off("loadedChange", this.loadedChange);
-    },
-    methods: {
-        loginChange(loggedIn: boolean) {
-            this.loggedIn = loggedIn;
-        },
-        loadedChange(loaded: boolean) {
-            this.loaded = loaded;
-        },
+        BundleGrid,
+        ServiceGrid,
     },
 });
 </script>
 
 <style scoped>
-.auth-container {
+.dashboard-container {
     display: flex;
-    flex-direction: column;
-    height: calc(100vh - 30px);
-    align-items: center;
-    justify-content: space-evenly;
+    height: 100vh;
+    width: 100vw;
 }
 
-.auth-main {
-    display: flex;
-    width: 600px;
-    max-width: 100%;
-    justify-content: center;
-    flex-direction: column;
+.dashboard-content {
+    flex: 1;
+    padding: 10px;
+    position: relative;
+}
+
+.spacer {
+    height: 100%;
+    width: 0;
+    border-left: 1px solid rgba(255, 255, 255, 0.75);
 }
 </style>

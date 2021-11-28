@@ -1,3 +1,5 @@
+import { ObjectMap } from "nodecg-io-core/extension/service";
+
 // There is no way we can get this function to pass the linter due to dynamic typing.
 /* eslint-disable */
 
@@ -15,4 +17,15 @@
   } else {
       return obj;
   }
+}
+/* eslint-enable */
+
+export function filterObjectMap<T>(obj: ObjectMap<T>, filter: (value: T, key: string) => boolean): ObjectMap<T> {
+    const filtered: ObjectMap<T> = {};
+    for (const key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key) && filter(obj[key], key)) {
+            filtered[key] = obj[key];
+        }
+    }
+    return filtered;
 }
