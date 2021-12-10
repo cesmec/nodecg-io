@@ -1,12 +1,25 @@
 <template>
     <div class="dashboard-container">
-        <div class="dashboard-content">
-            <ServiceGrid />
-        </div>
-        <div class="spacer"></div>
-        <div class="dashboard-content">
-            <BundleGrid />
-        </div>
+        <template v-if="small">
+            <div class="dashboard-content">
+                <v-btn
+                    @click="activeTab = activeTab === 'services' ? 'bundles' : 'services'"
+                    style="position: absolute; right: 5px"
+                    >Switch Tab</v-btn
+                >
+                <ServiceGrid v-if="activeTab === 'services'" />
+                <BundleGrid v-else />
+            </div>
+        </template>
+        <template v-else>
+            <div class="dashboard-content">
+                <ServiceGrid />
+            </div>
+            <div class="spacer"></div>
+            <div class="dashboard-content">
+                <BundleGrid />
+            </div>
+        </template>
     </div>
 </template>
 
@@ -14,12 +27,38 @@
 import BundleGrid from "@/components/bundles/BundleGrid.vue";
 import ServiceGrid from "@/components/services/ServiceGrid.vue";
 import { defineComponent } from "vue";
+import { useDisplay } from "vuetify";
 
 export default defineComponent({
     name: "AppDashboard",
     components: {
         BundleGrid,
         ServiceGrid,
+    },
+    setup() {
+        const display = useDisplay();
+
+        return {
+            display,
+        };
+    },
+    data() {
+        return {
+            small: false,
+            activeTab: "services" as "services" | "bundles",
+        };
+    },
+    mounted() {
+        window.addEventListener("resize", this.updateLayout, { passive: true });
+        this.updateLayout();
+    },
+    unmounted() {
+        window.removeEventListener("resize", this.updateLayout);
+    },
+    methods: {
+        updateLayout() {
+            this.small = this.display.smAndDown.value;
+        },
     },
 });
 </script>

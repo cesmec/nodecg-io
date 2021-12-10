@@ -43,7 +43,7 @@
 <script lang="ts">
 import GridView from "@/components/GridView.vue";
 import { Bundle, BundleManager } from "@/utils/bundleManager";
-import { config } from "@/utils/crypto";
+import { config, ConfigData } from "@/utils/crypto";
 import { filterObjectMap } from "@/utils/objectUtils";
 import { ObjectMap, ServiceDependency } from "nodecg-io-core/extension/service";
 import { defineComponent } from "vue";
@@ -65,11 +65,11 @@ export default defineComponent({
             instances: config.data?.instances ?? {},
         };
     },
-    created() {
-        config.onChange((data) => {
-            this.bundles = BundleManager.sortBundles(data.bundles);
-            this.instances = data.instances;
-        });
+    mounted() {
+        config.onChange(this.configChanged);
+    },
+    unmounted() {
+        config.offChange(this.configChanged);
     },
     computed: {
         filteredBundles(): ObjectMap<Bundle> {
@@ -84,6 +84,10 @@ export default defineComponent({
         },
     },
     methods: {
+        configChanged(data: ConfigData) {
+            this.bundles = BundleManager.sortBundles(data.bundles);
+            this.instances = data.instances;
+        },
         getServiceInstances(serviceType: string) {
             return filterObjectMap(this.instances, (instance) => instance.serviceType === serviceType);
         },

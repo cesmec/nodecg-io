@@ -34,7 +34,7 @@ import GridView from "@/components/GridView.vue";
 import ServiceConfigDialog from "@/components/services/ServiceConfigDialog.vue";
 import ServiceCreateDialog from "@/components/services/ServiceCreateDialog.vue";
 import { injectionKeys } from "@/utils/constants";
-import { config } from "@/utils/crypto";
+import { config, ConfigData } from "@/utils/crypto";
 import { filterObjectMap } from "@/utils/objectUtils";
 import { ServiceManager } from "@/utils/serviceManager";
 import { ObjectMap, ServiceInstance } from "nodecg-io-core/extension/service";
@@ -74,15 +74,19 @@ export default defineComponent({
             );
         },
     },
-    created() {
-        config.onChange((data) => {
-            this.instances = data.instances;
-            this.services = data.services;
-        });
+    mounted() {
+        config.onChange(this.configChanged);
+    },
+    unmounted() {
+        config.offChange(this.configChanged);
     },
     methods: {
         openCreateDialog() {
             this.createDialog?.show();
+        },
+        configChanged(data: ConfigData) {
+            this.instances = data.instances;
+            this.services = data.services;
         },
         showConfig(instanceName: string) {
             const instance = this.instances[instanceName];
@@ -92,7 +96,7 @@ export default defineComponent({
             }
         },
         async deleteInstance(instanceName: string) {
-            //todo: confirm
+            //todo: confirm delete
             try {
                 await this.serviceManager.deleteInstance(instanceName);
             } catch (error) {

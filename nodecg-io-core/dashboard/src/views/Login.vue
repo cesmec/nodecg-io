@@ -114,6 +114,7 @@ export default defineComponent({
 .login-card {
     min-height: 300px;
     width: 600px;
+    max-width: 100%;
 }
 
 form {
