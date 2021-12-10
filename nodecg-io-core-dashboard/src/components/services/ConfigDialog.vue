@@ -56,7 +56,7 @@ export default defineComponent({
         };
     },
     mounted() {
-        window.addEventListener("resize", this.resize);
+        window.addEventListener("resize", this.resize, { passive: true });
         window.addEventListener("keydown", this.keydown);
     },
     unmounted() {

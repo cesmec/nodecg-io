@@ -14,7 +14,7 @@ let password: string | undefined;
  *    I don't want to change the format of the serialized data.
  * b. having everything at hand using one variable is quite nice so I've added services here to complete it.
  */
-interface ConfigData {
+export interface ConfigData {
     instances: ObjectMap<ServiceInstance<unknown, unknown>>;
     bundles: ObjectMap<ServiceDependency<unknown>[]>;
     services: Service<unknown, never>[];
@@ -34,6 +34,10 @@ class Config extends EventEmitter {
 
     onChange(handler: (data: ConfigData) => void): void {
         super.on("change", handler);
+    }
+
+    offChange(handler: (data: ConfigData) => void): void {
+        super.off("change", handler);
     }
 }
 export const config = new Config();
