@@ -5,9 +5,6 @@
             "path": "./nodecg-io-core"
         },
         {
-            "path": "./nodecg-io-core-dashboard"
-        },
-        {
             "path": "./services"
         },
         {
