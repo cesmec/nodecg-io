@@ -16,9 +16,9 @@ class AuthService extends EventEmitter {
     constructor() {
         super();
 
-        // Handler for when the socket.io client re-connects which is usually a nodecg restart.
+        // Handler for when the socket.io client re-connects which is usually a NodeCG restart.
         nodecg.socket.on("connect", () => {
-            // Give nodecg 200ms to fully connect so everything is usable.
+            // Give NodeCG 200ms to fully connect, so everything is usable.
             setTimeout(() => {
                 this.isLoaded();
                 this.emit("connect");

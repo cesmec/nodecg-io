@@ -1,6 +1,12 @@
 name: CI
 
-on: [push, pull_request]
+on:
+    push:
+    pull_request:
+    schedule:
+        # https://crontab.guru/#3_21_*_*_6
+        - cron: "3 21 * * 6"
+
 jobs:
     build:
         runs-on: ubuntu-latest
@@ -19,6 +25,17 @@ jobs:
             - name: Build TS
               run: npm run build
 
+            - name: Create tar with compilation results
+              run: |
+                  shopt -s globstar
+                  tar cvzf compilation-results.tar.gz --exclude "node_modules" **/*.js **/*.js.map **/*.d.ts **/*.d.ts.map **/*.tsbuildinfo **/*.ttf
+
+            - name: Upload compilation results
+              uses: actions/upload-artifact@v2
+              with:
+                name: compilation-results
+                path: compilation-results.tar.gz
+
     tests:
         runs-on: ubuntu-latest
         steps:
@@ -35,3 +52,114 @@ jobs:
 
             - name: Run tests
               run: npm run coverage -- --verbose
+
+    nodecg:
+        # This test runs with the current version of NodeCG as defined by the
+        # nodecg-cli. It checks if all bundles (only core, services, samples)
+        # are mounted by NodeCG. It will fail if one of them is not mounted.
+        # You may check for other NodeCG runtime errors in the output (these
+        # may not fail the run).
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/setup-node@v2
+              with:
+                  node-version: "16"
+
+            - name: Install nodecg-cli
+              run: npm install --global nodecg-cli
+
+            - name: Setup NodeCG
+              run: nodecg setup
+
+            - name: Setup NodeCG config
+              run: |
+                  mkdir cfg
+                  echo '{"bundles": {"paths": ["'${GITHUB_WORKSPACE}'/nodecg-io","'${GITHUB_WORKSPACE}'/nodecg-io/services","'${GITHUB_WORKSPACE}'/nodecg-io/samples"]}}' > ./cfg/nodecg.json
+
+            # nodecg-io needs to be cloned after NodeCG setup because the nodecg-cli requires an empty directory.
+            - uses: actions/checkout@v2
+              with:
+                  path: "nodecg-io"
+
+            - name: Install system dependencies
+              run: sudo apt update && sudo apt-get -y install libusb-1.0-0-dev libasound2-dev libudev-dev
+
+            - name: Install nodejs dependencies
+              run: npm ci
+              working-directory: ./nodecg-io
+
+            - name: Build Typescript
+              run: npm run build
+              working-directory: ./nodecg-io
+
+            - name: Run test
+              run: node .scripts/ci-nodecg-integration.mjs
+              working-directory: ./nodecg-io
+
+    publish:
+        runs-on: ubuntu-latest
+        name: Publish compilation results
+        # Don't run this in forks. This pushes to our separate repository that external contributors don't have access to.
+        # We also only want to publish if we have pushed a branch, not on a pull request. Otherwise we would publish everything twice.
+        if: startsWith(github.repository, 'codeoverflow-org') && github.actor != 'dependabot[bot]' && github.event_name != 'pull_request'
+        # Only publish anything if we're sure this version compiles (obviously) and all tests pass.
+        needs:
+        - build
+        - tests
+        - nodecg
+        steps:
+            - uses: actions/checkout@v2
+            - uses: actions/setup-node@v2
+              with:
+                node-version: "16"
+
+            - name: Download compilation results # From the build step
+              uses: actions/download-artifact@v2
+              with:
+                name: compilation-results
+
+            - name: Extract compilation results
+              run: tar xvf compilation-results.tar.gz
+
+            - name: Create npm tarballs
+              run: npm pack --workspaces
+
+            - name: Clone publish repository
+              uses: actions/checkout@v2
+              with:
+                  repository: codeoverflow-org/nodecg-io-publish
+                  ssh-key: ${{ secrets.PUBLISH_SSH_KEY }}
+                  path: publish
+
+            - name: Checkout branch in publish repository
+              working-directory: publish
+              # Create a local branch with the same name as in the nodecg-io repository
+              # If the branch already exists on the remote we set the upstream to it,
+              # if not we push the branch and set the upstream to it as well.
+              run: |
+                  git fetch
+                  git switch ${GITHUB_REF##refs/heads/} || (git checkout -b ${GITHUB_REF##refs/heads/} && git push -u origin ${GITHUB_REF##refs/heads/})
+
+            - name: Clear publish directory
+              run: rm -rf publish/*
+
+            - name: Copy tarballs into publish directory
+              run: cp *.tgz publish
+
+            - name: Extract tarballs
+              working-directory: publish
+              run: |
+                  for tarPath in $(ls *.tgz); do
+                      tar xf $tarPath package;
+                      dirname=$(echo "$tarPath" | sed "s/-[0-9]\+\.[0-9]\+\.[0-9]\+\.tgz//"); # Strip away tgz extension and version
+                      mv package $dirname;
+                  done;
+
+            - name: Publish
+              uses: stefanzweifel/git-auto-commit-action@v4
+              with:
+                  commit_message: Publish codeoverflow-org/nodecg-io@${{ github.sha }}
+                  commit_user_name: codeoverflow-org
+                  commit_user_email: ""
+                  commit_author: codeoverflow-org <>
+                  repository: publish

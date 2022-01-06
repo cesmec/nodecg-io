@@ -7,6 +7,7 @@ module.exports = {
     outputDir: path.resolve(__dirname, "..", "nodecg-io-core", "dashboard"),
     publicPath: "./",
 
+    pluginOptions: {},
     transpileDependencies: ["vuetify"],
 
     configureWebpack: {
