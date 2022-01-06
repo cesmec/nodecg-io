@@ -26,7 +26,7 @@
 <script lang="ts">
 import { injectionKeys } from "@/utils/constants";
 import { objectDeepCopy } from "@/utils/objectUtils";
-import * as monaco from "monaco-editor";
+import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { ObjectMap, Service, ServiceInstance } from "nodecg-io-core/extension/service";
 import { defineComponent, inject, ref } from "vue";
 
