@@ -42,7 +42,7 @@
         "nodecg-io-tsconfig": "^1.0.0"
     },
     "dependencies": {
-        "@types/socket.io-client": "^1.4.36",
+        "@types/socket.io-client": "^3.0.0",
         "nodecg-io-core": "^0.3.0",
         "socket.io-client": "^2.4.0"
     }
