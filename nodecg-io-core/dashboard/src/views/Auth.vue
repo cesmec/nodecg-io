@@ -1,16 +1,16 @@
 <template>
-    <div v-if="loggedIn">
+    <template v-if="loggedIn">
         <Dashboard />
-    </div>
-    <div v-else class="login-container">
+    </template>
+    <template v-else>
         <Login />
-    </div>
+    </template>
 </template>
 
 <script lang="ts">
 import { authService } from "@/utils/authService";
-import Login from "@/views/Login.vue";
 import Dashboard from "@/views/Dashboard.vue";
+import Login from "@/views/Login.vue";
 import { defineComponent } from "vue";
 
 export default defineComponent({
@@ -21,36 +21,19 @@ export default defineComponent({
     },
     data() {
         return {
-            loaded: false,
             loggedIn: false,
         };
     },
     mounted(): void {
-        authService.isLoaded().then((loaded) => this.loadedChange(loaded));
-        authService.on("loadedChange", this.loadedChange);
         authService.on("loginChange", this.loginChange);
     },
     unmounted(): void {
-        authService.off("loadedChange", this.loadedChange);
         authService.off("loginChange", this.loginChange);
     },
     methods: {
         loginChange(loggedIn: boolean) {
             this.loggedIn = loggedIn;
         },
-        loadedChange(loaded: boolean) {
-            this.loaded = loaded;
-        },
     },
 });
 </script>
-
-<style scoped>
-.login-container {
-    display: flex;
-    flex-direction: column;
-    height: calc(100vh - 30px);
-    align-items: center;
-    justify-content: space-evenly;
-}
-</style>

@@ -1,117 +1,95 @@
 <template>
-    <v-dialog v-model="open" fullscreen>
-        <v-card>
-            <v-card-title>
-                <span class="text-h5">Configure Service</span>
-            </v-card-title>
-            <v-card-subtitle>
-                {{ instanceName }}
-            </v-card-subtitle>
-            <v-card-text>
-                <div ref="editorParent" class="editor-container"></div>
-            </v-card-text>
-            <v-card-actions>
-                <span class="error">{{ error }}</span>
-                <v-spacer></v-spacer>
-                <v-btn color="gray darken-1" text @click="close">Close</v-btn>
-                <v-btn class="btn-save" color="secondary" text @click="save" :disabled="saving">
-                    <v-progress-circular class="save-progress" v-if="saving" indeterminate color="secondary" />
-                    <span v-else>Save</span>
-                </v-btn>
-            </v-card-actions>
-        </v-card>
-    </v-dialog>
+    <ConfirmDialog
+        ref="dialog"
+        fullscreen
+        canConfirmWithCtrlS
+        confirmText="Save"
+        :confirmDisabled="!hasConfig"
+        @close="onClose"
+    >
+        <template v-slot:subtitle>
+            <span>{{ serviceType }}</span>
+        </template>
+        <div v-show="hasConfig" ref="editorContainer" class="editor-container"></div>
+        <div v-if="!hasConfig" ref="emptyConfig" class="empty-config">Nothing to configure</div>
+    </ConfirmDialog>
 </template>
 
 <script lang="ts">
+import ConfirmDialog from "@/components/ConfirmDialog.vue";
 import { injectionKeys } from "@/utils/constants";
 import { objectDeepCopy } from "@/utils/objectUtils";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { ObjectMap, Service, ServiceInstance } from "nodecg-io-core/extension/service";
-import { defineComponent, inject, ref } from "vue";
+import { defineComponent, inject, nextTick, ref } from "vue";
 
-// monaco works better when it's not in a vue Proxy object
-// however, doing it this way limits it to only one instance
+// The monaco editor works better when it's not inside a vue Proxy object.
+// But doing it this way limits it to only one instance which will be reused.
 let editor: monaco.editor.IStandaloneCodeEditor | undefined = undefined;
 
 export default defineComponent({
     name: "ServiceConfigDialog",
+    components: {
+        ConfirmDialog,
+    },
     setup() {
-        const editorParent = ref<HTMLElement>();
-        const editorElement = ref<HTMLElement>();
         return {
-            editorParent,
-            editorElement,
+            editorContainer: ref<HTMLElement>(),
+            editorElement: ref<HTMLElement>(),
+            emptyConfig: ref<HTMLElement>(),
+            dialog: ref<InstanceType<typeof ConfirmDialog>>(),
             serviceManager: inject(injectionKeys.serviceManager),
         };
     },
     data() {
         return {
-            open: false,
             instanceName: "",
+            serviceType: "",
             config: "",
-            error: "",
             schema: undefined as ObjectMap<unknown> | undefined,
-            saving: false,
+            observer: undefined as ResizeObserver | undefined,
         };
     },
-    watch: {
-        async open(newValue: boolean) {
-            this.error = "";
-
-            // wait one update cycle before accessing dom refs
-            await Promise.resolve();
-
-            if (newValue && this.editorParent) {
-                // manage monaco editor element manually instead of letting vue handle it
-                this.editorElement ??= document.createElement("div");
-                this.editorParent.appendChild(this.editorElement);
-                this.updateEditor(this.editorElement);
-            }
+    computed: {
+        hasConfig(): boolean {
+            return Boolean(this.schema);
         },
-    },
-    mounted() {
-        window.addEventListener("resize", this.resize, { passive: true });
-        window.addEventListener("keydown", this.keydown);
-    },
-    unmounted() {
-        window.removeEventListener("resize", this.resize);
-        window.removeEventListener("keydown", this.keydown);
     },
     methods: {
         show(instanceName: string, instance: ServiceInstance<unknown, unknown>, service: Service<unknown, unknown>) {
             this.instanceName = instanceName;
+            this.serviceType = instance.serviceType;
             this.config = JSON.stringify(instance.config, null, 4);
             this.schema = service.schema;
-            this.open = true;
-        },
-        close() {
-            this.open = false;
-            this.saving = false;
-        },
-        keydown(e: KeyboardEvent) {
-            if (this.open && e.ctrlKey && e.key === "s") {
-                e.preventDefault();
-                this.save();
-            }
+
+            this.dialog?.show(this.save, "Configure " + instanceName);
+
+            // wait one update cycle before accessing dom refs
+            nextTick(() => {
+                if (this.editorContainer) {
+                    // manage monaco editor element manually instead of letting vue handle it
+                    this.editorElement ??= document.createElement("div");
+                    this.editorContainer.appendChild(this.editorElement);
+                    this.updateEditor(this.editorElement);
+                    this.setHeightToAvailable();
+                }
+            });
         },
         async save() {
-            if (this.saving) {
-                return;
-            }
             this.config = editor?.getValue() ?? "";
-            this.error = "";
-            this.saving = true;
             try {
                 const config = JSON.parse(this.config);
                 await this.serviceManager?.updateInstanceConfig(this.instanceName, config);
-                this.close();
+                return true;
             } catch (error) {
                 console.log("config save failed", error);
-                this.error = error instanceof Error ? error.message : String(error);
+                return error instanceof Error ? error.message : String(error);
             }
-            this.saving = false;
         },
+        /**
+         * Initializes the editor if needed and creates a new textmodel for the configuration of the service instance.
+         * @param element Root element of the editor if it needs to be created
+         */
         updateEditor(element: HTMLElement) {
             editor?.getModel()?.dispose();
 
@@ -124,14 +102,17 @@ export default defineComponent({
             const model = monaco.editor.createModel(this.config, "json", options.validate ? modelUri : undefined);
             if (!editor) {
                 editor = monaco.editor.create(element, {
-                    model,
                     theme: "vs-dark",
+                    model,
                 });
             } else {
                 editor.setModel(model);
             }
             editor.layout();
         },
+        /**
+         * Create json diagnostics options from the model url and json schema.
+         */
         getServiceDiagnosticsOptions(modelUri: string): monaco.languages.json.DiagnosticsOptions {
             if (this.schema) {
                 return {
@@ -145,40 +126,59 @@ export default defineComponent({
                     ],
                 };
             }
+            // nothing to validate if there is no schema
             return {
-                validate: false, // if not set we disable validation again.
+                validate: false,
                 schemas: [],
             };
         },
-        resize() {
-            if (this.editorElement && this.editorParent && this.editorElement.parentElement === this.editorParent) {
-                editor?.layout();
+        /**
+         * Start automatic resize of the editor to match available height.
+         */
+        setHeightToAvailable() {
+            const cardTextElement = this.editorContainer?.parentElement;
+            const cardElement = cardTextElement?.parentElement;
+            if (!cardElement) return;
+
+            const siblings = Array.from(cardElement.children).filter((e) => e !== cardTextElement);
+
+            const calcSize = () => {
+                const maxHeight = window.innerHeight;
+                const siblingHeight = siblings.reduce((h, e) => h + e.clientHeight, 0);
+                const availableHeight = maxHeight - siblingHeight;
+
+                cardTextElement.style.height = `${availableHeight}px`;
+
+                if (this.editorElement && this.editorElement.parentElement === this.editorContainer) {
+                    editor?.layout();
+                }
+            };
+
+            this.observer = new ResizeObserver(calcSize);
+            this.observer.observe(cardElement);
+            for (const sibling of siblings) {
+                this.observer.observe(sibling);
             }
+            calcSize();
+        },
+        onClose() {
+            this.observer?.disconnect();
+            this.observer = undefined;
         },
     },
 });
 </script>
 
 <style>
-.editor-container {
-    width: 100%;
-    height: calc(100vh - 150px);
-}
-
+.empty-config,
+.editor-container,
 .editor-container > * {
     width: 100%;
     height: 100%;
 }
 
-.btn-save {
-    position: relative;
-}
-
-.save-progress {
-    position: absolute;
-}
-
-.error {
-    color: red;
+.empty-config {
+    display: grid;
+    place-items: center;
 }
 </style>

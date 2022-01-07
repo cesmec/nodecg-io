@@ -1,25 +1,20 @@
 <template>
     <div class="dashboard-container">
-        <template v-if="small">
-            <div class="dashboard-content">
-                <v-btn
-                    @click="activeTab = activeTab === 'services' ? 'bundles' : 'services'"
-                    style="position: absolute; right: 5px"
-                    >Switch Tab</v-btn
-                >
-                <ServiceGrid v-if="activeTab === 'services'" />
-                <BundleGrid v-else />
-            </div>
-        </template>
-        <template v-else>
-            <div class="dashboard-content">
-                <ServiceGrid />
-            </div>
-            <div class="spacer"></div>
-            <div class="dashboard-content">
-                <BundleGrid />
-            </div>
-        </template>
+        <div v-show="!small || activeTab === 'services'" class="dashboard-content">
+            <ServiceGrid />
+        </div>
+        <div v-if="!small" class="spacer"></div>
+        <div v-show="!small || activeTab === 'bundles'" class="dashboard-content">
+            <BundleGrid />
+        </div>
+        <!-- todo: use v-tabs when available -->
+        <v-btn
+            v-if="small"
+            style="position: fixed; top: 5px; right: 5px"
+            @click="activeTab = activeTab === 'services' ? 'bundles' : 'services'"
+        >
+            Switch Tab
+        </v-btn>
     </div>
 </template>
 

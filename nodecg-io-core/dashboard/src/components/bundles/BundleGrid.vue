@@ -2,7 +2,7 @@
     <div class="bundles-container">
         <h1>Bundles</h1>
         <!-- todo: similar to service instances -->
-        <v-text-field class="search" v-model="search" label="Search" clearable></v-text-field>
+        <v-text-field v-model="search" class="search" label="Search" clearable></v-text-field>
         <GridView>
             <v-card
                 v-for="(bundle, name) in filteredBundles"
@@ -42,7 +42,7 @@
 
 <script lang="ts">
 import GridView from "@/components/GridView.vue";
-import { Bundle, BundleManager } from "@/utils/bundleManager";
+import { Bundle, BundleManager, sortBundles } from "@/utils/bundleManager";
 import { config, ConfigData } from "@/utils/crypto";
 import { filterObjectMap } from "@/utils/objectUtils";
 import { ObjectMap, ServiceDependency } from "nodecg-io-core/extension/service";
@@ -61,19 +61,13 @@ export default defineComponent({
     data() {
         return {
             search: "",
-            bundles: BundleManager.sortBundles(config.data?.bundles ?? {}),
+            bundles: sortBundles(config.data?.bundles ?? {}),
             instances: config.data?.instances ?? {},
         };
     },
-    mounted() {
-        config.onChange(this.configChanged);
-    },
-    unmounted() {
-        config.offChange(this.configChanged);
-    },
     computed: {
         filteredBundles(): ObjectMap<Bundle> {
-            const search = this.search?.toLowerCase() || "";
+            const search = this.search?.toLowerCase() ?? "";
 
             return filterObjectMap(
                 this.bundles as ObjectMap<Bundle>,
@@ -83,9 +77,15 @@ export default defineComponent({
             );
         },
     },
+    mounted() {
+        config.onChange(this.configChanged);
+    },
+    unmounted() {
+        config.offChange(this.configChanged);
+    },
     methods: {
         configChanged(data: ConfigData) {
-            this.bundles = BundleManager.sortBundles(data.bundles);
+            this.bundles = sortBundles(data.bundles);
             this.instances = data.instances;
         },
         getServiceInstances(serviceType: string) {

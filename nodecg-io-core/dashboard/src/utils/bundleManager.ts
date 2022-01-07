@@ -15,34 +15,34 @@ export class BundleManager {
             serviceType: dep.serviceType,
         });
     }
+}
 
-    /**
-     * Sorts the bundles by active state. Active bundles appear first.
-     * @param bundles Bundles as stored in config
-     * @returns Sorted bundles with active property
-     */
-    static sortBundles(bundles: ObjectMap<ServiceDependency<unknown>[]>): ObjectMap<Bundle> {
-        const sorted: ObjectMap<Bundle> = {};
-        const inactiveBundles: ObjectMap<Bundle> = {};
-        for (const key in bundles) {
-            if (Object.prototype.hasOwnProperty.call(bundles, key)) {
-                const dependencies = bundles[key];
-                const bundle: Bundle = {
-                    dependencies,
-                    active: this.isBundleActive(dependencies),
-                };
-                if (bundle.active) {
-                    sorted[key] = bundle;
-                } else {
-                    inactiveBundles[key] = bundle;
-                }
+/**
+ * Sorts the bundles by active state. Active bundles appear first.
+ * @param bundles Bundles as stored in config
+ * @returns Sorted bundles with active property
+ */
+export function sortBundles(bundles: ObjectMap<ServiceDependency<unknown>[]>): ObjectMap<Bundle> {
+    const sorted: ObjectMap<Bundle> = {};
+    const inactiveBundles: ObjectMap<Bundle> = {};
+    for (const key in bundles) {
+        if (Object.prototype.hasOwnProperty.call(bundles, key)) {
+            const dependencies = bundles[key];
+            const bundle: Bundle = {
+                dependencies,
+                active: isBundleActive(dependencies),
+            };
+            if (bundle.active) {
+                sorted[key] = bundle;
+            } else {
+                inactiveBundles[key] = bundle;
             }
         }
-
-        return Object.assign(sorted, inactiveBundles);
     }
 
-    private static isBundleActive(bundle: ServiceDependency<unknown>[]) {
-        return bundle.every((svc) => svc.serviceInstance);
-    }
+    return Object.assign(sorted, inactiveBundles);
+}
+
+function isBundleActive(bundle: ServiceDependency<unknown>[]) {
+    return bundle.every((svc) => svc.serviceInstance);
 }

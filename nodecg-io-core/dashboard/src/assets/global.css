@@ -21,16 +21,33 @@ div.v-application {
     background-color: transparent;
 }
 
-/* Prevent unneccesary y-scrollbar */
-.v-application--wrap {
-    min-height: unset !important;
-}
-
 .center {
     display: flex;
     justify-content: center;
 }
 
-.container {
-    padding: 5px;
+.ellipsis {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Buttons already have a border when in focus */
+button:focus {
+    outline: none;
+}
+
+/* Prevent unneccesary y-scrollbar */
+.v-application--wrap {
+    min-height: unset !important;
+}
+
+/* card inside of a dialog */
+.v-dialog .v-overlay__content {
+    max-width: unset;
+}
+
+.small-card {
+    width: 600px;
+    max-width: 90vw;
 }
