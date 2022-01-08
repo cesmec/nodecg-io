@@ -4,6 +4,7 @@ node_modules
 
 !src/*.d.ts
 !*.config.js
+!tsconfig.json
 
 # local env files
 .env.local
