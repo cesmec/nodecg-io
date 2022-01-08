@@ -4,8 +4,12 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    # Disable version updates in my fork
+    open-pull-requests-limit: 0
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "saturday"
+    # Disable version updates in my fork
+    open-pull-requests-limit: 0
