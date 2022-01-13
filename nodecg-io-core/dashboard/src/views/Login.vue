@@ -32,9 +32,15 @@
                         </v-row>
                         <v-row>
                             <v-col>
-                                <v-btn class="button" block color="secondary" @click="submitForm">
+                                <LoadingBtn
+                                    class="button"
+                                    block
+                                    color="secondary"
+                                    :loading="loading"
+                                    @click="submitForm"
+                                >
                                     {{ firstStartup ? "Setup" : "Login" }}
-                                </v-btn>
+                                </LoadingBtn>
                             </v-col>
                         </v-row>
                     </v-container>
@@ -45,53 +51,52 @@
 </template>
 
 <script lang="ts">
-import { authService } from "@/utils/authService";
-import { isPasswordSet, setPassword } from "@/utils/crypto";
-import { defineComponent } from "vue";
+import LoadingBtn from "@/components/LoadingBtn.vue";
+import { useStore } from "@/store";
+import { isFirstStartup, isPasswordSet, setPassword } from "@/utils/crypto";
+import { defineComponent, ref } from "vue";
 
 export default defineComponent({
     name: "AppLogin",
+    components: {
+        LoadingBtn,
+    },
+    setup() {
+        const store = useStore();
+
+        return {
+            isLoaded: store.isLoaded,
+            loggedIn: store.loggedIn,
+            form: ref<HTMLFormElement>(),
+        };
+    },
     data() {
         return {
             firstStartup: false,
+            loading: false,
             password: "",
             passwordErrors: [] as string[],
             rules: [(value: string): string | true => !!value || "Required"],
         };
     },
     mounted() {
-        // Handler for when the socket.io client re-connects which is usually a nodecg restart.
-        authService.on("connect", this.nodecgConnect);
-
-        // Render loaded status for initial load
+        // Load initial state
         this.updateLoadedStatus();
         this.updateFirstStartupLabel();
     },
-    unmounted() {
-        authService.off("connect", this.nodecgConnect);
-    },
     methods: {
-        nodecgConnect() {
-            // If a password has been entered previously try to directly login using it.
-            if (this.password) {
-                this.loadFramework();
-            } else {
-                this.updateLoadedStatus();
-                this.updateFirstStartupLabel();
-            }
-        },
-        submitForm(e: Event) {
+        async submitForm(e: Event) {
             e.preventDefault();
-            const form = this.$refs.form as HTMLFormElement; // as { validate(): boolean };
-            if (form.reportValidity()) {
-                this.loadFramework();
+            if (this.form?.reportValidity()) {
+                this.loading = true;
+                await this.loadFramework();
+                this.loading = false;
             }
         },
         async updateLoadedStatus(): Promise<void> {
-            const loaded = await authService.isLoaded();
-
+            const loaded = await this.isLoaded();
             const loggedIn = loaded && isPasswordSet();
-            authService.emit("loginChange", loggedIn);
+            this.loggedIn(loggedIn);
         },
         async loadFramework(): Promise<void> {
             if (await setPassword(this.password)) {
@@ -103,7 +108,7 @@ export default defineComponent({
             this.updateLoadedStatus();
         },
         async updateFirstStartupLabel(): Promise<void> {
-            this.firstStartup = await authService.isFirstStartup();
+            this.firstStartup = await isFirstStartup();
         },
     },
 });

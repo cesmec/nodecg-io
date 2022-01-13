@@ -1,6 +1,6 @@
 <template>
     <h1>Service instances</h1>
-    <v-text-field v-model="search" label="Search" clearable></v-text-field>
+    <v-text-field v-model="search" class="service-search" label="Search" clearable></v-text-field>
     <GridView>
         <v-btn
             v-for="(instance, name) in filteredInstances"
@@ -27,7 +27,7 @@
             ></v-btn>
         </v-btn>
     </GridView>
-    <ServiceCreateDialog ref="createDialog" :services="services" />
+    <ServiceCreateDialog ref="createDialog" />
     <ServiceConfigDialog ref="configDialog" />
     <ConfirmDialog ref="deleteConfirmDialog" confirmText="Delete" closeText="Cancel" confirmColor="error" />
     <v-btn
@@ -46,12 +46,10 @@ import ConfirmDialog from "@/components/ConfirmDialog.vue";
 import GridView from "@/components/GridView.vue";
 import ServiceConfigDialog from "@/components/services/ServiceConfigDialog.vue";
 import ServiceCreateDialog from "@/components/services/ServiceCreateDialog.vue";
-import { injectionKeys } from "@/utils/constants";
-import { config, ConfigData } from "@/utils/crypto";
-import { filterObjectMap } from "@/utils/objectUtils";
-import { ServiceManager } from "@/utils/serviceManager";
-import { ObjectMap, ServiceInstance } from "nodecg-io-core/extension/service";
-import { defineComponent, provide, ref } from "vue";
+import { useStore } from "@/store";
+import { deleteServiceInstance } from "@/utils/services";
+import { ObjectMap, Service, ServiceInstance } from "@/utils/types";
+import { defineComponent, ref } from "vue";
 
 export default defineComponent({
     name: "ServiceGrid",
@@ -62,11 +60,11 @@ export default defineComponent({
         ConfirmDialog,
     },
     setup() {
-        const serviceManager = new ServiceManager();
-        provide(injectionKeys.serviceManager, serviceManager);
+        const store = useStore();
 
         return {
-            serviceManager,
+            store,
+            filterInstances: store.filterInstances,
             createDialog: ref<InstanceType<typeof ServiceCreateDialog>>(),
             configDialog: ref<InstanceType<typeof ServiceConfigDialog>>(),
             deleteConfirmDialog: ref<InstanceType<typeof ConfirmDialog>>(),
@@ -75,33 +73,22 @@ export default defineComponent({
     data() {
         return {
             search: "",
-            instances: config.data?.instances ?? {},
-            services: config.data?.services ?? [],
         };
     },
     computed: {
-        filteredInstances(): ObjectMap<ServiceInstance<unknown, unknown>> {
-            const search = this.search?.toLowerCase() ?? "";
-
-            return filterObjectMap(
-                this.instances,
-                (instance, key) => key.toLowerCase().includes(search) || instance.serviceType?.includes(search),
-            );
+        filteredInstances(): ObjectMap<ServiceInstance> {
+            return this.filterInstances(this.search);
         },
-    },
-    mounted() {
-        config.onChange(this.configChanged);
-    },
-    unmounted() {
-        config.offChange(this.configChanged);
+        services(): Service[] {
+            return this.store.state.services;
+        },
+        instances(): ObjectMap<ServiceInstance> {
+            return this.store.state.instances;
+        },
     },
     methods: {
         openCreateDialog() {
             this.createDialog?.show();
-        },
-        configChanged(data: ConfigData) {
-            this.instances = data.instances;
-            this.services = data.services;
         },
         showConfigDialog(instanceName: string) {
             const instance = this.instances[instanceName];
@@ -114,7 +101,7 @@ export default defineComponent({
          * Tests if the service instance requires a config but has none.
          * @param instance Service instance to test
          */
-        needsConfig(instance: ServiceInstance<unknown, unknown>) {
+        needsConfig(instance: ServiceInstance) {
             const service = this.services.find((s) => s.serviceType === instance.serviceType);
             if (!service || service.requiresNoConfig) {
                 return false;
@@ -124,7 +111,7 @@ export default defineComponent({
         confirmDelete(instanceName: string) {
             const deleteInstance = async () => {
                 try {
-                    await this.serviceManager.deleteInstance(instanceName);
+                    await deleteServiceInstance(instanceName);
                     return true;
                 } catch (error) {
                     console.warn("Service instance delete failed", error);
@@ -143,6 +130,10 @@ export default defineComponent({
 </script>
 
 <style>
+.service-search {
+    flex: 0;
+}
+
 .service-instance {
     display: grid;
     grid-template-columns: 1fr 50px;

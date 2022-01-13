@@ -1,4 +1,4 @@
-import { ObjectMap } from "nodecg-io-core/extension/service";
+import { ObjectMap } from "./types";
 
 // There is no way we can get this function to pass the linter due to dynamic typing.
 /* eslint-disable */
@@ -10,7 +10,7 @@ import { ObjectMap } from "nodecg-io-core/extension/service";
  export function objectDeepCopy<T extends Object>(obj: T | any): T {
   if (typeof obj === "object") {
       if (Array.isArray(obj)) {
-        return Array.from({ length: obj.length }).map((_v, i) => objectDeepCopy(obj[i])) as any;
+        return obj.map((entry) => objectDeepCopy(entry)) as any;
       } else {
         const copy = {} as any;
         for (var attr in obj) {

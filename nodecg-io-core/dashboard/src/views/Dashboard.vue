@@ -69,6 +69,8 @@ export default defineComponent({
     flex: 1;
     padding: 10px;
     position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 .spacer {

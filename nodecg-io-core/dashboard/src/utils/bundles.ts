@@ -1,28 +1,21 @@
 import { SetServiceDependencyMessage } from "nodecg-io-core/extension/messageManager";
-import { ObjectMap, ServiceDependency } from "nodecg-io-core/extension/service";
 import { sendAuthenticatedMessage } from "./crypto";
+import { Bundle, ObjectMap, ServiceDependency } from "./types";
 
-export interface Bundle {
-    dependencies: ServiceDependency<unknown>[];
-    active: boolean;
-}
-
-export class BundleManager {
-    updateBundleDependency(bundleName: string, dep: ServiceDependency<unknown>) {
-        return sendAuthenticatedMessage<SetServiceDependencyMessage, void>("setServiceDependency", {
-            bundleName,
-            instanceName: dep.serviceInstance,
-            serviceType: dep.serviceType,
-        });
-    }
+export function updateBundleDependency(bundleName: string, dep: ServiceDependency, instanceName: string | undefined) {
+    return sendAuthenticatedMessage<SetServiceDependencyMessage, void>("setServiceDependency", {
+        bundleName,
+        instanceName,
+        serviceType: dep.serviceType,
+    });
 }
 
 /**
- * Sorts the bundles by active state. Active bundles appear first.
+ * Sorts the bundles by their active state. Active bundles appear first.
  * @param bundles Bundles as stored in config
  * @returns Sorted bundles with active property
  */
-export function sortBundles(bundles: ObjectMap<ServiceDependency<unknown>[]>): ObjectMap<Bundle> {
+export function sortBundles(bundles: ObjectMap<ServiceDependency[]>): ObjectMap<Bundle> {
     const sorted: ObjectMap<Bundle> = {};
     const inactiveBundles: ObjectMap<Bundle> = {};
     for (const key in bundles) {
@@ -43,6 +36,6 @@ export function sortBundles(bundles: ObjectMap<ServiceDependency<unknown>[]>): O
     return Object.assign(sorted, inactiveBundles);
 }
 
-function isBundleActive(bundle: ServiceDependency<unknown>[]) {
+function isBundleActive(bundle: ServiceDependency[]) {
     return bundle.every((svc) => svc.serviceInstance);
 }

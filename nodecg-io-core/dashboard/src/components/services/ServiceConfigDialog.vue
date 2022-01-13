@@ -5,6 +5,7 @@
         canConfirmWithCtrlS
         confirmText="Save"
         :confirmDisabled="!hasConfig"
+        class="config-dialog"
         @close="onClose"
     >
         <template v-slot:subtitle>
@@ -17,11 +18,11 @@
 
 <script lang="ts">
 import ConfirmDialog from "@/components/ConfirmDialog.vue";
-import { injectionKeys } from "@/utils/constants";
 import { objectDeepCopy } from "@/utils/objectUtils";
+import { updateServiceInstanceConfig } from "@/utils/services";
+import { ObjectMap, Service, ServiceInstance } from "@/utils/types";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
-import { ObjectMap, Service, ServiceInstance } from "nodecg-io-core/extension/service";
-import { defineComponent, inject, nextTick, ref } from "vue";
+import { defineComponent, nextTick, ref } from "vue";
 
 // The monaco editor works better when it's not inside a vue Proxy object.
 // But doing it this way limits it to only one instance which will be reused.
@@ -38,7 +39,6 @@ export default defineComponent({
             editorElement: ref<HTMLElement>(),
             emptyConfig: ref<HTMLElement>(),
             dialog: ref<InstanceType<typeof ConfirmDialog>>(),
-            serviceManager: inject(injectionKeys.serviceManager),
         };
     },
     data() {
@@ -56,7 +56,7 @@ export default defineComponent({
         },
     },
     methods: {
-        show(instanceName: string, instance: ServiceInstance<unknown, unknown>, service: Service<unknown, unknown>) {
+        show(instanceName: string, instance: ServiceInstance, service: Service) {
             this.instanceName = instanceName;
             this.serviceType = instance.serviceType;
             this.config = JSON.stringify(instance.config, null, 4);
@@ -79,7 +79,7 @@ export default defineComponent({
             this.config = editor?.getValue() ?? "";
             try {
                 const config = JSON.parse(this.config);
-                await this.serviceManager?.updateInstanceConfig(this.instanceName, config);
+                await updateServiceInstanceConfig(this.instanceName, config);
                 return true;
             } catch (error) {
                 console.log("config save failed", error);
@@ -180,5 +180,9 @@ export default defineComponent({
 .empty-config {
     display: grid;
     place-items: center;
+}
+
+.config-dialog .v-card-text {
+    opacity: 1;
 }
 </style>

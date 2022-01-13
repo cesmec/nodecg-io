@@ -1,11 +1,10 @@
 import { EventEmitter } from "events";
 import { PasswordMessage } from "nodecg-io-core/extension/messageManager";
 import { decryptData, EncryptedData, PersistentData } from "nodecg-io-core/extension/persistenceManager";
-import { ObjectMap, Service, ServiceDependency, ServiceInstance } from "nodecg-io-core/extension/service";
-import { authService } from "./authService";
+import { ObjectMap, Service, ServiceDependency, ServiceInstance } from "./types";
 
 const encryptedData = nodecg.Replicant<EncryptedData>("encryptedConfig");
-let services: Service<unknown, never>[] | undefined;
+let services: Service[] | undefined;
 let password: string | undefined;
 
 /**
@@ -17,9 +16,9 @@ let password: string | undefined;
  * b. having everything at hand using one variable is quite nice, so I've added services here to complete it.
  */
 export interface ConfigData {
-    instances: ObjectMap<ServiceInstance<unknown, unknown>>;
-    bundles: ObjectMap<ServiceDependency<unknown>[]>;
-    services: Service<unknown, never>[];
+    instances: ObjectMap<ServiceInstance>;
+    bundles: ObjectMap<ServiceDependency[]>;
+    services: Service[];
 }
 
 /**
@@ -125,8 +124,8 @@ function persistentData2ConfigData(data: PersistentData | undefined): ConfigData
     }
 
     return {
-        instances: data.instances,
-        bundles: data.bundleDependencies,
+        instances: data.instances as ObjectMap<ServiceInstance>,
+        bundles: data.bundleDependencies as ObjectMap<ServiceDependency[]>,
         // services can be treated as constant because once loaded they shouldn't change any more.
         // Therefore, we don't need a handler to rebuild this if services change.
         services,
@@ -138,7 +137,7 @@ async function fetchServices() {
 }
 
 async function loadFramework(): Promise<boolean> {
-    if (await authService.isLoaded()) return true;
+    if (await isLoaded()) return true;
 
     try {
         await nodecg.sendMessage("load", { password });
@@ -146,4 +145,12 @@ async function loadFramework(): Promise<boolean> {
     } catch {
         return false;
     }
+}
+
+export function isLoaded(): Promise<boolean> {
+    return nodecg.sendMessage("isLoaded");
+}
+
+export function isFirstStartup(): Promise<boolean> {
+    return nodecg.sendMessage("isFirstStartup");
 }

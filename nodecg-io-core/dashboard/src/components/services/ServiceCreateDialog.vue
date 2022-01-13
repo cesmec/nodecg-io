@@ -23,24 +23,18 @@
 
 <script lang="ts">
 import ConfirmDialog from "@/components/ConfirmDialog.vue";
-import { injectionKeys } from "@/utils/constants";
-import { Service } from "nodecg-io-core/extension/service";
-import { defineComponent, inject, PropType, ref } from "vue";
+import { useStore } from "@/store";
+import { createServiceInstance } from "@/utils/services";
+import { defineComponent, ref } from "vue";
 
 export default defineComponent({
     name: "ServiceCreateDialog",
     components: {
         ConfirmDialog,
     },
-    props: {
-        services: {
-            type: Array as PropType<Service<unknown, unknown>[]>,
-            required: true,
-        },
-    },
     setup() {
         return {
-            serviceManager: inject(injectionKeys.serviceManager),
+            store: useStore(),
             dialog: ref<InstanceType<typeof ConfirmDialog>>(),
         };
     },
@@ -52,7 +46,7 @@ export default defineComponent({
     },
     computed: {
         serviceTypes(): string[] {
-            return this.services.map((service) => service.serviceType);
+            return this.store.serviceTypes;
         },
     },
     methods: {
@@ -64,7 +58,7 @@ export default defineComponent({
         },
         async saveNewInstance() {
             try {
-                await this.serviceManager?.createService(this.type, this.name);
+                await createServiceInstance(this.type, this.name);
                 return true;
             } catch (error) {
                 console.warn("Failed to create service instance", error);

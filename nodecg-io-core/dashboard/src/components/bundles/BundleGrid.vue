@@ -1,51 +1,48 @@
 <template>
-    <div class="bundles-container">
-        <h1>Bundles</h1>
-        <!-- todo: similar to service instances -->
-        <v-text-field v-model="search" class="search" label="Search" clearable></v-text-field>
-        <GridView>
-            <v-card
-                v-for="(bundle, name) in filteredBundles"
-                :key="name"
-                :class="['bundle', bundle.active ? 'active' : '']"
-            >
-                <v-card-title class="bundle-title">
-                    <span class="ellipsis">{{ name }}</span>
-                </v-card-title>
-                <v-card-text>
-                    services
-                    <div class="dependencies">
-                        <template v-for="dep in bundle.dependencies" :key="dep">
-                            <span class="dependency-type">{{ dep.serviceType }}</span>
-                            <!-- todo: use v-select when available -->
-                            <select
-                                v-model="dep.serviceInstance"
-                                style="background: white; padding: 4px"
-                                @change="updateBundleDependency(name, dep)"
+    <h1>Bundles</h1>
+    <v-text-field v-model="search" class="bundle-search" label="Search" clearable></v-text-field>
+    <GridView>
+        <v-card
+            v-for="(bundle, name) in filteredBundles"
+            :key="name"
+            :class="['bundle', bundle.active ? 'active' : '']"
+        >
+            <v-card-title class="bundle-title">
+                <span class="ellipsis">{{ name }}</span>
+            </v-card-title>
+            <v-card-text>
+                services
+                <div class="bundle-dependencies">
+                    <template v-for="dep in bundle.dependencies" :key="dep">
+                        <span class="dependency-type">{{ dep.serviceType }}</span>
+                        <!-- todo: use v-select when available -->
+                        <select
+                            style="background: white; padding: 4px"
+                            @input="(e) => updateBundleDependency(name, dep, e.target.selectedOptions[0]._value)"
+                        >
+                            <option :value="undefined" :selected="dep.serviceInstance === undefined">none</option>
+                            <option
+                                v-for="(service, name) in getServiceInstances(dep.serviceType)"
+                                :value="name"
+                                :key="name"
+                                :selected="dep.serviceInstance === name"
                             >
-                                <option :value="undefined">none</option>
-                                <option
-                                    v-for="(service, name) in getServiceInstances(dep.serviceType)"
-                                    :value="name"
-                                    :key="name"
-                                >
-                                    {{ name }}
-                                </option>
-                            </select>
-                        </template>
-                    </div>
-                </v-card-text>
-            </v-card>
-        </GridView>
-    </div>
+                                {{ name }}
+                            </option>
+                        </select>
+                    </template>
+                </div>
+            </v-card-text>
+        </v-card>
+    </GridView>
 </template>
 
 <script lang="ts">
 import GridView from "@/components/GridView.vue";
-import { Bundle, BundleManager, sortBundles } from "@/utils/bundleManager";
-import { config, ConfigData } from "@/utils/crypto";
+import { useStore } from "@/store";
+import { updateBundleDependency } from "@/utils/bundles";
 import { filterObjectMap } from "@/utils/objectUtils";
-import { ObjectMap, ServiceDependency } from "nodecg-io-core/extension/service";
+import { Bundle, ObjectMap, ServiceInstance } from "@/utils/types";
 import { defineComponent } from "vue";
 
 export default defineComponent({
@@ -54,61 +51,37 @@ export default defineComponent({
         GridView,
     },
     setup() {
+        const store = useStore();
+
         return {
-            bundleManager: new BundleManager(),
+            store,
+            filterBundles: store.filterBundles,
+            updateBundleDependency,
         };
     },
     data() {
         return {
             search: "",
-            bundles: sortBundles(config.data?.bundles ?? {}),
-            instances: config.data?.instances ?? {},
         };
     },
     computed: {
         filteredBundles(): ObjectMap<Bundle> {
-            const search = this.search?.toLowerCase() ?? "";
-
-            return filterObjectMap(
-                this.bundles as ObjectMap<Bundle>,
-                (bundle, key) =>
-                    key.toLowerCase().includes(search) ||
-                    bundle.dependencies.some((svc) => svc.serviceType.includes(search)),
-            );
+            return this.filterBundles(this.search);
         },
-    },
-    mounted() {
-        config.onChange(this.configChanged);
-    },
-    unmounted() {
-        config.offChange(this.configChanged);
+        instances(): ObjectMap<ServiceInstance> {
+            return this.store.state.instances;
+        },
     },
     methods: {
-        configChanged(data: ConfigData) {
-            this.bundles = sortBundles(data.bundles);
-            this.instances = data.instances;
-        },
         getServiceInstances(serviceType: string) {
             return filterObjectMap(this.instances, (instance) => instance.serviceType === serviceType);
-        },
-        updateBundleDependency(bundleName: string, dep: ServiceDependency<unknown>) {
-            if (dep.serviceInstance === "") {
-                dep.serviceInstance = undefined;
-            }
-            this.bundleManager.updateBundleDependency(bundleName, dep);
         },
     },
 });
 </script>
 
-<style scoped>
-.bundles-container {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-.search {
+<style>
+.bundle-search {
     flex: 0;
 }
 
@@ -124,7 +97,7 @@ export default defineComponent({
     opacity: 1;
 }
 
-.dependencies {
+.bundle-dependencies {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
 }

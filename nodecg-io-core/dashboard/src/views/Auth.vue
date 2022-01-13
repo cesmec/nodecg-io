@@ -8,7 +8,7 @@
 </template>
 
 <script lang="ts">
-import { authService } from "@/utils/authService";
+import { useStore } from "@/store";
 import Dashboard from "@/views/Dashboard.vue";
 import Login from "@/views/Login.vue";
 import { defineComponent } from "vue";
@@ -19,20 +19,14 @@ export default defineComponent({
         Login,
         Dashboard,
     },
-    data() {
+    setup() {
         return {
-            loggedIn: false,
+            store: useStore(),
         };
     },
-    mounted(): void {
-        authService.on("loginChange", this.loginChange);
-    },
-    unmounted(): void {
-        authService.off("loginChange", this.loginChange);
-    },
-    methods: {
-        loginChange(loggedIn: boolean) {
-            this.loggedIn = loggedIn;
+    computed: {
+        loggedIn(): boolean {
+            return this.store.state.loggedIn;
         },
     },
 });
