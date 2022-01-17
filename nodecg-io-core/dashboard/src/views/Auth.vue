@@ -1,10 +1,14 @@
 <template>
-    <template v-if="loggedIn">
-        <Dashboard />
-    </template>
-    <template v-else>
-        <Login />
-    </template>
+    <div class="auth-container">
+        <transition name="fade">
+            <template v-if="loggedIn">
+                <Dashboard />
+            </template>
+            <template v-else>
+                <Login />
+            </template>
+        </transition>
+    </div>
 </template>
 
 <script lang="ts">
@@ -31,3 +35,29 @@ export default defineComponent({
     },
 });
 </script>
+
+<style>
+.auth-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.auth-container > * {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+</style>
