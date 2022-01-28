@@ -18,7 +18,7 @@
                         <!-- todo: use v-select when available -->
                         <select
                             style="background: white; padding: 4px"
-                            @input="(e) => updateBundleDependency(name, dep, e.target.selectedOptions[0]._value)"
+                            @input="(e) => updateBundleDependency(name, dep, (e.target as any).selectedOptions[0]._value)"
                         >
                             <option :value="undefined" :selected="dep.serviceInstance === undefined">none</option>
                             <option

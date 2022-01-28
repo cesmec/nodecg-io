@@ -114,7 +114,6 @@ export default defineComponent({
                     await deleteServiceInstance(instanceName);
                     return true;
                 } catch (error) {
-                    console.warn("Service instance delete failed", error);
                     return typeof error === "string" ? error : "Unknown error";
                 }
             };

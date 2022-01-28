@@ -20,7 +20,7 @@
                 color="secondary"
             ></v-progress-circular>
         </div>
-        <div v-if="!hasConfig" ref="emptyConfig" class="empty-config">Nothing to configure</div>
+        <div v-if="!hasConfig" ref="emptyConfig" class="empty-config">This service cannot be configured.</div>
     </ConfirmDialog>
 </template>
 
@@ -41,6 +41,8 @@ export default defineComponent({
         return {
             // Shallow ref, because the editor should not be reactive and wrapped in a Vue.js Proxy.
             editor: shallowRef<monaco.editor.IStandaloneCodeEditor>(),
+            schema: shallowRef<ObjectMap<unknown>>(),
+            observer: shallowRef<ResizeObserver>(),
             editorContainer: ref<HTMLElement>(),
             editorElement: ref<HTMLElement>(),
             emptyConfig: ref<HTMLElement>(),
@@ -53,8 +55,6 @@ export default defineComponent({
             serviceType: "",
             config: "",
             editorLoaded: false,
-            schema: undefined as ObjectMap<unknown> | undefined,
-            observer: undefined as ResizeObserver | undefined,
         };
     },
     computed: {
@@ -73,7 +73,7 @@ export default defineComponent({
 
             // Wait one update cycle before accessing dom refs.
             nextTick(() => {
-                this.setHeightToAvailable();
+                this.observeForAvailableHeight();
                 if (this.editorContainer && this.hasConfig) {
                     // Manage monaco editor element manually instead of letting vue handle it.
                     this.editorElement ??= document.createElement("div");
@@ -146,18 +146,19 @@ export default defineComponent({
         },
         /**
          * Start automatic resize of the editor to match available height.
+         * Available height is the size of the dialog minus sibling elements of the editor like header and actions.
          */
-        setHeightToAvailable() {
+        observeForAvailableHeight() {
             const cardTextElement = this.editorContainer?.parentElement;
             const cardElement = cardTextElement?.parentElement;
             if (!cardElement) return;
 
             const siblings = Array.from(cardElement.children).filter((e) => e !== cardTextElement);
 
-            const calcSize = () => {
+            const resizeToAvailableHeight = () => {
                 const maxHeight = window.innerHeight;
-                const siblingHeight = siblings.reduce((h, e) => h + e.clientHeight, 0);
-                const availableHeight = maxHeight - siblingHeight;
+                const siblingHeightSum = siblings.reduce((h, elem) => h + elem.clientHeight, 0);
+                const availableHeight = maxHeight - siblingHeightSum;
 
                 cardTextElement.style.height = `${availableHeight}px`;
 
@@ -166,12 +167,12 @@ export default defineComponent({
                 }
             };
 
-            this.observer = new ResizeObserver(calcSize);
+            resizeToAvailableHeight();
+            this.observer = new ResizeObserver(resizeToAvailableHeight);
             this.observer.observe(cardElement);
             for (const sibling of siblings) {
                 this.observer.observe(sibling);
             }
-            calcSize();
         },
         onClose() {
             this.observer?.disconnect();

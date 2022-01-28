@@ -10,6 +10,7 @@
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
         "sourceMap": true,
+        "noEmit": true,
         "baseUrl": ".",
         "types": ["webpack-env", "nodecg-types/types/browser"],
         "paths": {

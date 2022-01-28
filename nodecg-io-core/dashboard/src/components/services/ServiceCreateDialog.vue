@@ -1,5 +1,5 @@
 <template>
-    <ConfirmDialog ref="dialog" confirmText="Create" :confirmCallback="saveNewInstance" canConfirmWithCtrlS>
+    <ConfirmDialog ref="dialog" confirmText="Create" canConfirmWithCtrlS>
         <v-row>
             <v-col cols="12">
                 <v-text-field v-model="name" label="Name" required></v-text-field>
@@ -61,7 +61,6 @@ export default defineComponent({
                 await createServiceInstance(this.type, this.name);
                 return true;
             } catch (error) {
-                console.warn("Failed to create service instance", error);
                 return typeof error === "string" ? error : "Unknown error";
             }
         },

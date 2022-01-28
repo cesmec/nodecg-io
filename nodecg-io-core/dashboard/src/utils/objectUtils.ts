@@ -1,28 +1,26 @@
 import { ObjectMap } from "./types";
 
-// There is no way we can get this function to pass the linter due to dynamic typing.
-/* eslint-disable */
-
 /**
  * Creates a deep copy of an object.
  * @param obj the copy of which a deep copy should be created.
  */
- export function objectDeepCopy<T extends Object>(obj: T | any): T {
-  if (typeof obj === "object") {
-      if (Array.isArray(obj)) {
-        return obj.map((entry) => objectDeepCopy(entry)) as any;
-      } else {
-        const copy = {} as any;
-        for (var attr in obj) {
-            if (obj.hasOwnProperty(attr)) copy[attr] = objectDeepCopy(obj[attr]);
+export function objectDeepCopy<T>(obj: T): T {
+    if (typeof obj === "object" && obj !== null) {
+        if (Array.isArray(obj)) {
+            return Array.prototype.map.call(obj, (entry) => objectDeepCopy(entry)) as unknown as T;
+        } else {
+            const copy = {} as T;
+            for (const attr in obj) {
+                if (Object.prototype.hasOwnProperty.call(obj, attr)) {
+                    copy[attr] = objectDeepCopy(obj[attr]);
+                }
+            }
+            return copy;
         }
-        return copy;
-      }
-  } else {
-      return obj;
-  }
+    } else {
+        return obj;
+    }
 }
-/* eslint-enable */
 
 /**
  * Filter an {@link ObjectMap} based on a filter predicate.

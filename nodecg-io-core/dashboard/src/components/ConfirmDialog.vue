@@ -5,7 +5,9 @@
                 <span class="text-h5">{{ title }}</span>
             </v-card-title>
             <v-card-subtitle class="dialog-subtitle">
-                <slot name="subtitle"></slot>
+                <div class="dialog-subtitle-content">
+                    <slot name="subtitle"></slot>
+                </div>
                 <v-alert v-if="error" class="error-alert" border="start" type="error">
                     <span class="error-alert-text">{{ error }}</span>
                 </v-alert>
@@ -123,5 +125,10 @@ export default defineComponent({
 .dialog-subtitle {
     flex-direction: column;
     align-items: flex-start;
+    opacity: 1;
+}
+
+.dialog-subtitle-content {
+    opacity: 0.6;
 }
 </style>

@@ -19,6 +19,8 @@ npm run watch
 This command automatically recompiles when included files change.
 Changes are available after reloading the dashboard website and usually do not require a restart of NodeCG.
 
+For better TypeScript support in Vue.js components, the [Volar extension](https://marketplace.visualstudio.com/items?itemName=johnsoncodehk.volar) is recommended for Visual Studio Code.
+
 ## Lints and fixes files
 ```
 npm run lint
