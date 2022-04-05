@@ -116,11 +116,7 @@ export default defineComponent({
 
 <style scoped>
 .login-container {
-    display: flex;
-    flex-direction: column;
-    height: calc(100vh - 30px);
-    align-items: center;
-    justify-content: space-evenly;
+    display: grid;
 }
 
 .logo {
@@ -129,6 +125,7 @@ export default defineComponent({
 
 .login-card {
     min-height: 300px;
+    place-self: center;
 }
 
 form {

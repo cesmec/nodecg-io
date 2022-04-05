@@ -21,11 +21,6 @@ div.v-application {
     background-color: transparent;
 }
 
-.center {
-    display: flex;
-    justify-content: center;
-}
-
 .ellipsis {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -42,7 +37,7 @@ button:focus {
     min-height: unset !important;
 }
 
-/* card inside of a dialog */
+/* Card inside of a dialog */
 .v-dialog .v-overlay__content {
     max-width: unset;
 }
@@ -50,4 +45,16 @@ button:focus {
 .small-card {
     width: 600px;
     max-width: 90vw;
+}
+
+/* Grid styles */
+.v-input.grid-view-search {
+    flex: 0;
+}
+
+.grid-view-container {
+    max-height: 100%;
+    overflow: auto;
+    display: flex;
+    flex-wrap: wrap;
 }

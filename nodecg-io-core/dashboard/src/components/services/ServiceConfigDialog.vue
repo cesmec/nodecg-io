@@ -11,16 +11,14 @@
         <template v-slot:subtitle>
             <span>{{ serviceType }}</span>
         </template>
-        <div v-show="hasConfig" ref="editorContainer" class="editor-container">
-            <v-progress-circular
-                v-if="!editorLoaded"
-                class="editor-progress"
-                indeterminate
-                :size="50"
-                color="secondary"
-            ></v-progress-circular>
+        <div ref="editorContainer" class="editor-container">
+            <div v-if="!hasConfig" class="editor-centered">
+                <p>This service cannot be configured.</p>
+            </div>
+            <div v-else-if="!editorLoaded" class="editor-centered">
+                <v-progress-circular indeterminate :size="50" color="secondary"></v-progress-circular>
+            </div>
         </div>
-        <div v-if="!hasConfig" ref="emptyConfig" class="empty-config">This service cannot be configured.</div>
     </ConfirmDialog>
 </template>
 
@@ -45,15 +43,13 @@ export default defineComponent({
             observer: shallowRef<ResizeObserver>(),
             editorContainer: ref<HTMLElement>(),
             editorElement: ref<HTMLElement>(),
-            emptyConfig: ref<HTMLElement>(),
             dialog: ref<InstanceType<typeof ConfirmDialog>>(),
+            updateSymbol: ref<symbol>(),
         };
     },
     data() {
         return {
-            instanceName: "",
             serviceType: "",
-            config: "",
             editorLoaded: false,
         };
     },
@@ -64,12 +60,21 @@ export default defineComponent({
     },
     methods: {
         show(instanceName: string, instance: ServiceInstance, service: Service) {
-            this.instanceName = instanceName;
             this.serviceType = instance.serviceType;
-            this.config = JSON.stringify(instance.config, null, 4);
             this.schema = service.schema;
 
-            this.dialog?.show(this.save, "Configure " + instanceName);
+            const save = async () => {
+                try {
+                    const configJson = this.editor?.getValue() ?? "";
+                    const config = JSON.parse(configJson);
+                    await updateServiceInstanceConfig(instanceName, config);
+                    return true;
+                } catch (error) {
+                    return error instanceof Error ? error.message : String(error);
+                }
+            };
+
+            this.dialog?.show(save, "Configure " + instanceName);
 
             // Wait one update cycle before accessing dom refs.
             nextTick(() => {
@@ -78,40 +83,42 @@ export default defineComponent({
                     // Manage monaco editor element manually instead of letting vue handle it.
                     this.editorElement ??= document.createElement("div");
                     this.editorContainer.appendChild(this.editorElement);
-                    this.updateEditor(this.editorElement);
+
+                    const configJson = instance.config ? JSON.stringify(instance.config, null, 4) : "";
+                    this.updateEditor(this.editorElement, configJson);
                 }
             });
         },
-        async save() {
-            this.config = this.editor?.getValue() ?? "";
-            try {
-                const config = JSON.parse(this.config);
-                await updateServiceInstanceConfig(this.instanceName, config);
-                return true;
-            } catch (error) {
-                return error instanceof Error ? error.message : String(error);
-            }
-        },
         /**
          * Initializes the editor if needed and creates a new textmodel for the configuration of the service instance.
-         * @param element Root element of the editor if it needs to be created
+         * @param element Root element of the editor
+         * @param configJson Configuration in JSON format, can be empty when config is not yet set on the current instance.
          */
-        async updateEditor(element: HTMLElement) {
+        async updateEditor(element: HTMLElement, configJson: string) {
             this.editor?.getModel()?.dispose();
 
+            const updateSymbol = Symbol("editor-update");
+            this.updateSymbol = updateSymbol;
+
             const { Uri, languages, editor } = await import(
-                /* webpackPrefetch: true, webpackChunkName: "monaco-editor" */
+                /* webpackChunkName: "monaco-editor", webpackPrefetch: true */
                 "monaco-editor/esm/vs/editor/editor.api"
             );
             this.editorLoaded = true;
 
-            // This model uri can be completely made up as long the uri in the schema matches with the one in the language model.
-            const modelUri = Uri.parse(`mem://nodecg-io/selectedServiceSchema.json`);
+            // Cancel editor update if the user closed the dialog while monaco was loading.
+            if (this.updateSymbol !== updateSymbol) {
+                return;
+            }
 
-            const options = this.getServiceDiagnosticsOptions(modelUri.toString());
+            // These uris can be completely made up as long the uri in the schema matches the one of the config json model.
+            const schemaUri = Uri.parse("mem://nodecg-io/selectedServiceSchema.json");
+            const modelUri = Uri.parse("mem://nodecg-io/selectedServiceConfig.json");
+
+            const options = this.getServiceDiagnosticsOptions(schemaUri.toString(), modelUri.toString());
             languages.json.jsonDefaults.setDiagnosticsOptions(options);
 
-            const model = editor.createModel(this.config, "json", options.validate ? modelUri : undefined);
+            const model = editor.createModel(configJson, "json", options.validate ? modelUri : undefined);
             if (!this.editor) {
                 this.editor = editor.create(element, {
                     theme: "vs-dark",
@@ -124,14 +131,16 @@ export default defineComponent({
         },
         /**
          * Create json diagnostics options from the model url and json schema.
+         * @param schemaUri Uri for the json schema
+         * @param modelUri Uri for the config json model
          */
-        getServiceDiagnosticsOptions(modelUri: string): monaco.languages.json.DiagnosticsOptions {
+        getServiceDiagnosticsOptions(schemaUri: string, modelUri: string): monaco.languages.json.DiagnosticsOptions {
             if (this.schema) {
                 return {
                     validate: true,
                     schemas: [
                         {
-                            uri: modelUri,
+                            uri: schemaUri,
                             fileMatch: [modelUri],
                             schema: objectDeepCopy(this.schema),
                         },
@@ -177,36 +186,25 @@ export default defineComponent({
         onClose() {
             this.observer?.disconnect();
             this.observer = undefined;
+            this.updateSymbol = undefined;
         },
     },
 });
 </script>
 
 <style>
-.empty-config,
 .editor-container,
 .editor-container > * {
     width: 100%;
     height: 100%;
 }
 
-.empty-config {
+.editor-container > .editor-centered {
     display: grid;
     place-items: center;
 }
 
 .config-dialog .v-card-text {
     opacity: 1;
-}
-
-.editor-container {
-    position: relative;
-}
-
-.editor-progress {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
 }
 </style>

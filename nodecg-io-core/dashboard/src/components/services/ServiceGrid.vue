@@ -1,7 +1,7 @@
 <template>
     <h1>Service instances</h1>
-    <v-text-field v-model="search" class="service-search" label="Search" clearable></v-text-field>
-    <GridView>
+    <v-text-field v-model="search" class="grid-view-search" label="Search" clearable></v-text-field>
+    <div class="grid-view-container">
         <v-btn
             v-for="(instance, name) in filteredInstances"
             :key="name"
@@ -26,7 +26,7 @@
                 @click.stop="confirmDelete(name)"
             ></v-btn>
         </v-btn>
-    </GridView>
+    </div>
     <ServiceCreateDialog ref="createDialog" />
     <ServiceConfigDialog ref="configDialog" />
     <ConfirmDialog ref="deleteConfirmDialog" confirmText="Delete" closeText="Cancel" confirmColor="error" />
@@ -43,7 +43,6 @@
 
 <script lang="ts">
 import ConfirmDialog from "@/components/ConfirmDialog.vue";
-import GridView from "@/components/GridView.vue";
 import ServiceConfigDialog from "@/components/services/ServiceConfigDialog.vue";
 import ServiceCreateDialog from "@/components/services/ServiceCreateDialog.vue";
 import { useStore } from "@/store";
@@ -54,7 +53,6 @@ import { defineComponent, ref } from "vue";
 export default defineComponent({
     name: "ServiceGrid",
     components: {
-        GridView,
         ServiceCreateDialog,
         ServiceConfigDialog,
         ConfirmDialog,
@@ -129,10 +127,6 @@ export default defineComponent({
 </script>
 
 <style>
-.service-search {
-    flex: 0;
-}
-
 .service-instance {
     display: grid;
     grid-template-columns: 1fr 50px;

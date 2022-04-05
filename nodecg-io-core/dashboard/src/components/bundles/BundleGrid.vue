@@ -1,19 +1,15 @@
 <template>
     <h1>Bundles</h1>
-    <v-text-field v-model="search" class="bundle-search" label="Search" clearable></v-text-field>
-    <GridView>
-        <v-card
-            v-for="(bundle, name) in filteredBundles"
-            :key="name"
-            :class="['bundle', bundle.active ? 'active' : '']"
-        >
+    <v-text-field v-model="search" class="grid-view-search" label="Search" clearable></v-text-field>
+    <div class="grid-view-container">
+        <v-card v-for="(bundle, name) in filteredBundles" :key="name" :class="{ bundle: true, active: bundle.active }">
             <v-card-title class="bundle-title">
                 <span class="ellipsis">{{ name }}</span>
             </v-card-title>
             <v-card-text>
                 services
                 <div class="bundle-dependencies">
-                    <template v-for="dep in bundle.dependencies" :key="dep">
+                    <template v-for="dep in bundle.dependencies" :key="dep.serviceType">
                         <span class="dependency-type">{{ dep.serviceType }}</span>
                         <!-- todo: use v-select when available -->
                         <select
@@ -22,7 +18,7 @@
                         >
                             <option :value="undefined" :selected="dep.serviceInstance === undefined">none</option>
                             <option
-                                v-for="(service, name) in getServiceInstances(dep.serviceType)"
+                                v-for="(_instance, name) in getServiceInstances(dep.serviceType)"
                                 :value="name"
                                 :key="name"
                                 :selected="dep.serviceInstance === name"
@@ -34,11 +30,10 @@
                 </div>
             </v-card-text>
         </v-card>
-    </GridView>
+    </div>
 </template>
 
 <script lang="ts">
-import GridView from "@/components/GridView.vue";
 import { useStore } from "@/store";
 import { updateBundleDependency } from "@/utils/bundles";
 import { filterObjectMap } from "@/utils/objectUtils";
@@ -47,9 +42,6 @@ import { defineComponent } from "vue";
 
 export default defineComponent({
     name: "BundleGrid",
-    components: {
-        GridView,
-    },
     setup() {
         const store = useStore();
 
@@ -81,10 +73,6 @@ export default defineComponent({
 </script>
 
 <style>
-.bundle-search {
-    flex: 0;
-}
-
 .bundle {
     margin: 10px;
     opacity: 0.75;
