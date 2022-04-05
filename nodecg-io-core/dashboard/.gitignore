@@ -1,10 +1,15 @@
 .DS_Store
 node_modules
-/dist
 
-!src/*.d.ts
+# Build output
+dist
+
+# Config files
 !*.config.js
 !tsconfig.json
+
+# TypeScript shims
+!src/*.d.ts
 
 # local env files
 .env.local

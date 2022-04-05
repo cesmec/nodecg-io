@@ -1,3 +1,4 @@
+/** @type {import("eslint").Linter.Config} */
 module.exports = {
     root: true,
     env: {
@@ -14,6 +15,8 @@ module.exports = {
         ecmaVersion: 2020,
     },
     rules: {
+        // Git uses the OS line endings by default, which should not produce warnings
+        "prettier/prettier": ["warn", { endOfLine: "auto" }],
         "no-console": process.env.NODE_ENV === "production" ? "warn" : "off",
         "no-debugger": process.env.NODE_ENV === "production" ? "warn" : "off",
     },

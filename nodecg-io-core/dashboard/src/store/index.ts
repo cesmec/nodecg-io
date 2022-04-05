@@ -19,7 +19,10 @@ export interface State {
     loggedIn: boolean;
 }
 
-// All methods of the Store class should be declared as properties, so they are bound to the instance.
+/**
+ * Global state for the nodecg-io Dashboard.
+ * Note: All methods of the Store class should be declared as properties instead of instance methods, so they are bound to the instance.
+ */
 class Store {
     state: State;
 
@@ -90,7 +93,7 @@ const initialState: State = {
 };
 const store = Object.freeze(new Store(initialState));
 
-//load initial values
+// Load initial values
 store.isLoaded();
 store.configUpdate(config.data);
 

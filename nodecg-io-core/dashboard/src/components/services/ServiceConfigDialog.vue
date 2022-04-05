@@ -59,6 +59,12 @@ export default defineComponent({
         },
     },
     methods: {
+        /**
+         * Open the dialog to edit the service instance configuration.
+         * @param instanceName Name of this service instance
+         * @param instance Service instance to configure
+         * @param service Service that this instance is based on
+         */
         show(instanceName: string, instance: ServiceInstance, service: Service) {
             this.serviceType = instance.serviceType;
             this.schema = service.schema;
