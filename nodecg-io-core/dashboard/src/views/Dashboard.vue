@@ -1,20 +1,18 @@
 <template>
     <div class="dashboard-container">
-        <div v-show="!small || activeTab === 'services'" class="dashboard-content">
-            <ServiceGrid />
+        <v-tabs v-if="small" v-model="activeTab" class="dashboard-tabs" background-color="secondary">
+            <v-tab value="services" class="dashboard-tab">Services</v-tab>
+            <v-tab value="bundles" class="dashboard-tab">Bundles</v-tab>
+        </v-tabs>
+        <div class="dashboard-container-content">
+            <div v-show="!small || activeTab === 'services'" class="dashboard-content">
+                <ServiceGrid />
+            </div>
+            <div v-if="!small" class="spacer"></div>
+            <div v-show="!small || activeTab === 'bundles'" class="dashboard-content">
+                <BundleGrid />
+            </div>
         </div>
-        <div v-if="!small" class="spacer"></div>
-        <div v-show="!small || activeTab === 'bundles'" class="dashboard-content">
-            <BundleGrid />
-        </div>
-        <!-- todo: use v-tabs when available -->
-        <v-btn
-            v-if="small"
-            style="position: fixed; top: 5px; right: 5px"
-            @click="activeTab = activeTab === 'services' ? 'bundles' : 'services'"
-        >
-            Switch Tab
-        </v-btn>
     </div>
 </template>
 
@@ -61,8 +59,25 @@ export default defineComponent({
 <style scoped>
 .dashboard-container {
     display: flex;
+    flex-direction: column;
     height: 100vh;
     width: 100vw;
+}
+
+.dashboard-tabs {
+    flex: 0;
+}
+
+.dashboard-tab {
+    width: 50%;
+    max-width: 50%;
+}
+
+.dashboard-container-content {
+    display: flex;
+    flex: 1;
+    max-height: 100%;
+    overflow: auto;
 }
 
 .dashboard-content {

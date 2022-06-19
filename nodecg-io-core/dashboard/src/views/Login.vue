@@ -5,8 +5,7 @@
                 <img class="logo" alt="nodecg-io header" src="header_white.png" />
             </v-card-title>
             <v-card-text>
-                <!-- todo: use v-form when available -->
-                <form @submit="submitForm" ref="form">
+                <v-form @submit="submitForm" ref="form">
                     <v-container>
                         <v-row>
                             <v-col>
@@ -32,42 +31,40 @@
                         </v-row>
                         <v-row>
                             <v-col>
-                                <LoadingBtn
+                                <v-btn
                                     class="button"
                                     block
                                     color="secondary"
                                     :loading="loading"
+                                    :disabled="loading"
                                     @click="submitForm"
                                 >
                                     {{ firstStartup ? "Setup" : "Login" }}
-                                </LoadingBtn>
+                                </v-btn>
                             </v-col>
                         </v-row>
                     </v-container>
-                </form>
+                </v-form>
             </v-card-text>
         </v-card>
     </div>
 </template>
 
 <script lang="ts">
-import LoadingBtn from "@/components/LoadingBtn.vue";
 import { useStore } from "@/store";
 import { isFirstStartup, isPasswordSet, setPassword } from "@/utils/crypto";
 import { defineComponent, ref } from "vue";
+import { VForm } from "vuetify/components";
 
 export default defineComponent({
     name: "AppLogin",
-    components: {
-        LoadingBtn,
-    },
     setup() {
         const store = useStore();
 
         return {
             isLoaded: store.isLoaded,
             loggedIn: store.loggedIn,
-            form: ref<HTMLFormElement>(),
+            form: ref<VForm>(),
         };
     },
     data() {
@@ -76,7 +73,7 @@ export default defineComponent({
             loading: false,
             password: "",
             passwordErrors: [] as string[],
-            rules: [(value: string): string | true => !!value || "Required"],
+            rules: [(value: string): string | true => (value ? true : "Password is required")],
         };
     },
     mounted() {
@@ -87,7 +84,8 @@ export default defineComponent({
     methods: {
         async submitForm(e: Event) {
             e.preventDefault();
-            if (this.form?.reportValidity()) {
+            const formResult = await this.form?.validate();
+            if (formResult?.valid) {
                 this.loading = true;
                 await this.loadFramework();
                 this.loading = false;

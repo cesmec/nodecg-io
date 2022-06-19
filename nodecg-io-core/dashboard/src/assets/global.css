@@ -27,19 +27,14 @@ div.v-application {
     white-space: nowrap;
 }
 
+/* When a selected entry in a dropdown is too long, allow it to wrap to multiple lines */
+.v-select__selection {
+    word-break: break-word;
+}
+
 /* Buttons already have a border when in focus */
 button:focus {
-    outline: none;
-}
-
-/* Prevent unneccesary y-scrollbar */
-.v-application--wrap {
-    min-height: unset !important;
-}
-
-/* Card inside of a dialog */
-.v-dialog .v-overlay__content {
-    max-width: unset;
+    outline: none !important;
 }
 
 .small-card {

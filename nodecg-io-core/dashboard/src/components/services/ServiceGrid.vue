@@ -158,6 +158,7 @@ export default defineComponent({
 .instance-title {
     grid-column: 1;
     grid-row: 1;
+    max-width: 250px;
 }
 
 .instance-type {

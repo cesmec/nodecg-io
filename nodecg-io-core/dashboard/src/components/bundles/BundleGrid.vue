@@ -7,26 +7,13 @@
                 <span class="ellipsis">{{ name }}</span>
             </v-card-title>
             <v-card-text>
-                services
                 <div class="bundle-dependencies">
-                    <template v-for="dep in bundle.dependencies" :key="dep.serviceType">
-                        <span class="dependency-type">{{ dep.serviceType }}</span>
-                        <!-- todo: use v-select when available -->
-                        <select
-                            style="background: white; color: black; padding: 4px"
-                            @input="(e) => updateBundleDependency(name, dep, (e.target as any).selectedOptions[0]._value)"
-                        >
-                            <option :value="undefined" :selected="dep.serviceInstance === undefined">none</option>
-                            <option
-                                v-for="(_instance, name) in getServiceInstances(dep.serviceType)"
-                                :value="name"
-                                :key="name"
-                                :selected="dep.serviceInstance === name"
-                            >
-                                {{ name }}
-                            </option>
-                        </select>
-                    </template>
+                    <BundleDependency
+                        v-for="dep in bundle.dependencies"
+                        :key="dep.serviceType"
+                        :dep="dep"
+                        @update="(value) => updateBundleDependency(name, dep, value)"
+                    />
                 </div>
             </v-card-text>
         </v-card>
@@ -34,19 +21,21 @@
 </template>
 
 <script lang="ts">
+import BundleDependency from "@/components/bundles/BundleDependency.vue";
 import { useStore } from "@/store";
 import { updateBundleDependency } from "@/utils/bundles";
-import { filterObjectMap } from "@/utils/objectUtils";
-import { Bundle, ObjectMap, ServiceInstance } from "@/utils/types";
+import { Bundle, ObjectMap } from "@/utils/types";
 import { defineComponent } from "vue";
 
 export default defineComponent({
     name: "BundleGrid",
+    components: {
+        BundleDependency,
+    },
     setup() {
         const store = useStore();
 
         return {
-            store,
             filterBundles: store.filterBundles,
             updateBundleDependency,
         };
@@ -60,14 +49,6 @@ export default defineComponent({
         filteredBundles(): ObjectMap<Bundle> {
             return this.filterBundles(this.search);
         },
-        instances(): ObjectMap<ServiceInstance> {
-            return this.store.state.instances;
-        },
-    },
-    methods: {
-        getServiceInstances(serviceType: string) {
-            return filterObjectMap(this.instances, (instance) => instance.serviceType === serviceType);
-        },
     },
 });
 </script>
@@ -77,7 +58,8 @@ export default defineComponent({
     margin: 10px;
     opacity: 0.75;
     min-height: 100px;
-    min-width: 150px;
+    height: min-content;
+    min-width: 200px;
     max-width: 300px;
 }
 
@@ -85,13 +67,12 @@ export default defineComponent({
     opacity: 1;
 }
 
-.bundle-dependencies {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+.bundle-title {
+    margin-bottom: 0;
 }
 
-.dependency-type {
-    padding: 4px;
-    padding-left: 0;
+.bundle-dependencies {
+    display: flex;
+    flex-direction: column;
 }
 </style>

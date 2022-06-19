@@ -8,7 +8,7 @@
                 <div class="dialog-subtitle-content">
                     <slot name="subtitle"></slot>
                 </div>
-                <v-alert v-if="error" class="error-alert" border="start" type="error">
+                <v-alert v-if="error" class="error-alert" border="start" type="error" variant="tonal">
                     <span class="error-alert-text">{{ error }}</span>
                 </v-alert>
             </v-card-subtitle>
@@ -24,16 +24,15 @@
             <v-card-actions>
                 <v-spacer></v-spacer>
                 <v-btn color="gray darken-1" @click="close">{{ closeText }}</v-btn>
-                <LoadingBtn :color="confirmColor" :loading="loading" :disabled="confirmDisabled" @click="confirm">
+                <v-btn :color="confirmColor" :loading="loading" :disabled="loading || confirmDisabled" @click="confirm">
                     {{ confirmText }}
-                </LoadingBtn>
+                </v-btn>
             </v-card-actions>
         </v-card>
     </v-dialog>
 </template>
 
 <script lang="ts">
-import LoadingBtn from "@/components/LoadingBtn.vue";
 import { defineComponent, ref } from "vue";
 
 export type ConfirmResult = true | string;
@@ -41,9 +40,6 @@ type ConfirmCallback = () => Promise<ConfirmResult> | ConfirmResult;
 
 export default defineComponent({
     name: "ConfirmDialog",
-    components: {
-        LoadingBtn,
-    },
     props: {
         closeText: {
             type: String,
@@ -130,5 +126,9 @@ export default defineComponent({
 
 .dialog-subtitle-content {
     opacity: 0.6;
+}
+
+.error-alert-text {
+    color: rgba(240, 240, 240, 0.9);
 }
 </style>
