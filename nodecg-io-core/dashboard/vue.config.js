@@ -1,13 +1,11 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
+const { defineConfig } = require("@vue/cli-service");
 const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
 const { SourceMapDevToolPlugin } = require("webpack");
 
 process.env.VUE_APP_TITLE = "nodecg-io Dashboard";
 
-/**
- * @type {import("@vue/cli-service").ProjectOptions}
- */
-module.exports = {
+module.exports = defineConfig({
     outputDir: "dist",
     publicPath: "./",
 
@@ -27,4 +25,4 @@ module.exports = {
             }),
         ],
     },
-};
+});

@@ -9,22 +9,26 @@
             :aria-label="'Service ' + name + ' of type ' + instance.serviceType"
             @click="showConfigDialog(name)"
         >
-            <v-card-title class="instance-title">
-                <span class="ellipsis">
-                    <v-icon v-if="needsConfig(instance)" color="warning" title="Needs configuration">mdi-alert</v-icon>
-                    {{ name }}
-                </span>
-            </v-card-title>
-            <v-card-subtitle class="instance-type">{{ instance.serviceType }}</v-card-subtitle>
-            <v-btn
-                class="btn-delete-service"
-                color="error"
-                icon="mdi-delete"
-                size="small"
-                title="Delete"
-                :aria-label="'Delete service ' + name"
-                @click.stop="confirmDelete(name)"
-            ></v-btn>
+            <div class="service-instance-content">
+                <v-card-title class="instance-title">
+                    <span class="ellipsis">
+                        <v-icon v-if="needsConfig(instance)" color="warning" title="Needs configuration"
+                            >mdi-alert</v-icon
+                        >
+                        {{ name }}
+                    </span>
+                </v-card-title>
+                <v-card-subtitle class="instance-type">{{ instance.serviceType }}</v-card-subtitle>
+                <v-btn
+                    class="btn-delete-service"
+                    color="error"
+                    icon="mdi-delete"
+                    size="small"
+                    title="Delete"
+                    :aria-label="'Delete service ' + name"
+                    @click.stop="confirmDelete(name)"
+                ></v-btn>
+            </div>
         </v-btn>
     </div>
     <ServiceCreateDialog ref="createDialog" />
@@ -128,15 +132,26 @@ export default defineComponent({
 
 <style>
 .service-instance {
-    display: grid;
-    grid-template-columns: 1fr 50px;
-    grid-template-rows: auto auto;
-    grid-auto-rows: min-content;
     padding: 0;
     margin: 10px;
     min-height: 100px;
     min-width: 200px;
     max-width: 400px;
+    overflow: hidden;
+}
+
+.service-instance > .v-btn__content {
+    width: 100%;
+}
+
+.service-instance-content {
+    display: grid;
+    grid-template-columns: 1fr 50px;
+    grid-template-rows: auto auto;
+    grid-auto-rows: min-content;
+    padding: 0;
+    margin: 0;
+    width: 100%;
     overflow: hidden;
 }
 
