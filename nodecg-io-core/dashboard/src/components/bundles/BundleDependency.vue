@@ -1,67 +1,49 @@
+<script setup lang="ts">
+import { useStoreState } from "@/store";
+import { filterObjectMap } from "@/utils/objectUtils";
+import { ServiceDependency } from "@/utils/types";
+import { computed, PropType } from "vue";
+
+const props = defineProps({
+    dependency: {
+        type: Object as PropType<ServiceDependency>,
+        required: true,
+    },
+});
+
+const emit = defineEmits({
+    update: (value: string | undefined) => typeof value === "string" || typeof value === "undefined",
+});
+
+const { instances } = useStoreState();
+
+const selectableInstances = computed(() => Object.keys(getServiceInstances(props.dependency.serviceType)));
+const isDisabled = computed(() => selectableInstances.value.length === 0);
+
+function getServiceInstances(serviceType: string) {
+    return filterObjectMap(instances.value, (instance) => instance.serviceType === serviceType);
+}
+
+function onUpdate(value: string) {
+    if (value) {
+        emit("update", value);
+    }
+}
+</script>
+
 <template>
     <v-select
-        :model-value="dep.serviceInstance"
+        :model-value="dependency.serviceInstance"
         class="bundle-dependency"
-        :label="dep.serviceType"
+        :label="dependency.serviceType"
         :items="selectableInstances"
         :disabled="isDisabled"
         hide-details="auto"
         clearable
         @update:model-value="(value) => onUpdate(value)"
-        @click:clear="onUpdate(undefined)"
+        @click:clear="emit('update', undefined)"
     ></v-select>
 </template>
-
-<script lang="ts">
-import { useStore } from "@/store";
-import { filterObjectMap } from "@/utils/objectUtils";
-import { ObjectMap, ServiceDependency, ServiceInstance } from "@/utils/types";
-import { defineComponent, PropType } from "vue";
-
-export default defineComponent({
-    name: "BundleDependency",
-    props: {
-        dep: {
-            type: Object as PropType<ServiceDependency>,
-            required: true,
-        },
-    },
-    emits: {
-        update: (value: string | undefined) => typeof value === "string" || typeof value === "undefined",
-    },
-    setup() {
-        const store = useStore();
-
-        return {
-            store,
-        };
-    },
-    computed: {
-        instances(): ObjectMap<ServiceInstance> {
-            return this.store.state.instances;
-        },
-        selectableInstances(): string[] {
-            return this.getSelectableInstances(this.$props.dep.serviceType);
-        },
-        isDisabled(): boolean {
-            return this.selectableInstances.length === 0;
-        },
-    },
-    methods: {
-        getServiceInstances(serviceType: string) {
-            return filterObjectMap(this.instances, (instance) => instance.serviceType === serviceType);
-        },
-        getSelectableInstances(serviceType: string): string[] {
-            return Object.keys(this.getServiceInstances(serviceType));
-        },
-        onUpdate(value: string | undefined) {
-            if (typeof value === "string" || typeof value === "undefined") {
-                this.$emit("update", value);
-            }
-        },
-    },
-});
-</script>
 
 <style>
 .bundle-dependency:not(:first-of-type) {

@@ -1,3 +1,64 @@
+<script setup lang="ts">
+import ConfirmDialog from "@/components/ConfirmDialog.vue";
+import ServiceConfigDialog from "@/components/services/ServiceConfigDialog.vue";
+import ServiceCreateDialog from "@/components/services/ServiceCreateDialog.vue";
+import { useStore, useStoreState } from "@/store";
+import { deleteServiceInstance } from "@/utils/services";
+import { ServiceInstance } from "@/utils/types";
+import { computed, ref } from "vue";
+
+const createDialog = ref<InstanceType<typeof ServiceCreateDialog>>();
+const configDialog = ref<InstanceType<typeof ServiceConfigDialog>>();
+const deleteConfirmDialog = ref<InstanceType<typeof ConfirmDialog>>();
+
+const search = ref("");
+
+const store = useStore();
+const { instances, services } = useStoreState();
+const filteredInstances = computed(() => store.filterInstances(search.value));
+
+function openCreateDialog() {
+    createDialog.value?.show();
+}
+
+function showConfigDialog(instanceName: string) {
+    const instance = instances.value[instanceName];
+    const service = services.value.find((svc) => svc.serviceType === instance?.serviceType);
+    if (instance && service) {
+        configDialog.value?.show(instanceName, instance, service);
+    }
+}
+
+/**
+ * Tests if the service instance requires a config but has none.
+ * @param instance Service instance to test
+ */
+function needsConfig(instance: ServiceInstance) {
+    const service = services.value.find((s) => s.serviceType === instance.serviceType);
+    if (!service || service.requiresNoConfig) {
+        return false;
+    }
+    return !instance.config;
+}
+
+function confirmDelete(instanceName: string) {
+    const deleteInstance = async () => {
+        try {
+            await deleteServiceInstance(instanceName);
+            return true;
+        } catch (error) {
+            return typeof error === "string" ? error : "Unknown error";
+        }
+    };
+
+    deleteConfirmDialog.value?.show(
+        deleteInstance,
+        "Delete service instance",
+        `Do you want to delete instance "${instanceName}"?`,
+    );
+}
+</script>
+
 <template>
     <h1>Service instances</h1>
     <v-text-field v-model="search" class="grid-view-search" label="Search" clearable></v-text-field>
@@ -44,91 +105,6 @@
         @click="openCreateDialog"
     ></v-btn>
 </template>
-
-<script lang="ts">
-import ConfirmDialog from "@/components/ConfirmDialog.vue";
-import ServiceConfigDialog from "@/components/services/ServiceConfigDialog.vue";
-import ServiceCreateDialog from "@/components/services/ServiceCreateDialog.vue";
-import { useStore } from "@/store";
-import { deleteServiceInstance } from "@/utils/services";
-import { ObjectMap, Service, ServiceInstance } from "@/utils/types";
-import { defineComponent, ref } from "vue";
-
-export default defineComponent({
-    name: "ServiceGrid",
-    components: {
-        ServiceCreateDialog,
-        ServiceConfigDialog,
-        ConfirmDialog,
-    },
-    setup() {
-        const store = useStore();
-
-        return {
-            store,
-            filterInstances: store.filterInstances,
-            createDialog: ref<InstanceType<typeof ServiceCreateDialog>>(),
-            configDialog: ref<InstanceType<typeof ServiceConfigDialog>>(),
-            deleteConfirmDialog: ref<InstanceType<typeof ConfirmDialog>>(),
-        };
-    },
-    data() {
-        return {
-            search: "",
-        };
-    },
-    computed: {
-        filteredInstances(): ObjectMap<ServiceInstance> {
-            return this.filterInstances(this.search);
-        },
-        services(): Service[] {
-            return this.store.state.services;
-        },
-        instances(): ObjectMap<ServiceInstance> {
-            return this.store.state.instances;
-        },
-    },
-    methods: {
-        openCreateDialog() {
-            this.createDialog?.show();
-        },
-        showConfigDialog(instanceName: string) {
-            const instance = this.instances[instanceName];
-            const service = this.services.find((svc) => svc.serviceType === instance?.serviceType);
-            if (instance && service) {
-                this.configDialog?.show(instanceName, instance, service);
-            }
-        },
-        /**
-         * Tests if the service instance requires a config but has none.
-         * @param instance Service instance to test
-         */
-        needsConfig(instance: ServiceInstance) {
-            const service = this.services.find((s) => s.serviceType === instance.serviceType);
-            if (!service || service.requiresNoConfig) {
-                return false;
-            }
-            return !instance.config;
-        },
-        confirmDelete(instanceName: string) {
-            const deleteInstance = async () => {
-                try {
-                    await deleteServiceInstance(instanceName);
-                    return true;
-                } catch (error) {
-                    return typeof error === "string" ? error : "Unknown error";
-                }
-            };
-
-            this.deleteConfirmDialog?.show(
-                deleteInstance,
-                "Delete service instance",
-                `Do you want to delete instance "${instanceName}"?`,
-            );
-        },
-    },
-});
-</script>
 
 <style>
 .service-instance {

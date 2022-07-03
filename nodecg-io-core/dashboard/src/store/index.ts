@@ -2,7 +2,7 @@ import { sortBundles } from "@/utils/bundles";
 import { config, ConfigData, isLoaded } from "@/utils/crypto";
 import { filterObjectMap } from "@/utils/objectUtils";
 import { Bundle, ObjectMap, Service, ServiceInstance } from "@/utils/types";
-import { inject, InjectionKey, reactive } from "vue";
+import { computed, ComputedRef, inject, InjectionKey, reactive } from "vue";
 
 export interface State {
     /** All bundles currently stored in nodecg-io. */
@@ -108,6 +108,21 @@ nodecg.socket.on("disconnect", () => {
     store.connected(false);
 });
 
+type ComputedState = {
+    [K in keyof State]: ComputedRef<State[K]>;
+};
+
 export const injectionKey: InjectionKey<Readonly<Store>> = Symbol("nodecg-io-store");
 export const useStore = () => inject(injectionKey, store);
+export function useStoreState() {
+    const { state } = useStore();
+    const computedState = {} as ComputedState;
+
+    for (const k of Reflect.ownKeys(state)) {
+        const key = k as keyof State;
+        computedState[key] = computed(() => state[key]) as never;
+    }
+
+    return computedState;
+}
 export { store };

@@ -1,3 +1,50 @@
+<script setup lang="ts">
+import ConfirmDialog from "@/components/ConfirmDialog.vue";
+import { useStore } from "@/store";
+import { createServiceInstance } from "@/utils/services";
+import { VuetifyValidationRule } from "@/utils/types";
+import { computed, ref, watch } from "vue";
+import type { VForm, VTextField } from "vuetify/components";
+
+defineExpose({
+    show,
+});
+
+const dialog = ref<InstanceType<typeof ConfirmDialog>>();
+
+const nameRules: VuetifyValidationRule[] = [(name) => (name ? true : "Name is required")];
+const typeRules: VuetifyValidationRule[] = [(type) => (type ? true : "Type is required")];
+
+const name = ref("");
+const type = ref("");
+
+const form = ref<VForm>();
+const nameField = ref<VTextField>();
+
+const store = useStore();
+const serviceTypes = computed(() => store.serviceTypes);
+
+watch(name, () => nameField.value?.resetValidation());
+// Reset validation is currently not supported on v-select directly
+watch(type, () => form.value?.resetValidation());
+
+function show() {
+    name.value = "";
+    type.value = "";
+
+    dialog.value?.show(saveNewInstance, "Create service instance");
+}
+
+async function saveNewInstance() {
+    try {
+        await createServiceInstance(type.value, name.value);
+        return true;
+    } catch (error) {
+        return typeof error === "string" ? error : "Unknown error";
+    }
+}
+</script>
+
 <template>
     <ConfirmDialog ref="dialog" confirmText="Create" canConfirmWithCtrlS>
         <v-form ref="form">
@@ -29,72 +76,6 @@
         </v-form>
     </ConfirmDialog>
 </template>
-
-<script lang="ts">
-import ConfirmDialog from "@/components/ConfirmDialog.vue";
-import { useStore } from "@/store";
-import { createServiceInstance } from "@/utils/services";
-import { defineComponent, ref } from "vue";
-import { VForm, VTextField } from "vuetify/components";
-
-export default defineComponent({
-    name: "ServiceCreateDialog",
-    components: {
-        ConfirmDialog,
-    },
-    setup() {
-        return {
-            store: useStore(),
-            dialog: ref<InstanceType<typeof ConfirmDialog>>(),
-            form: ref<VForm>(),
-            nameField: ref<VTextField>(),
-        };
-    },
-    data() {
-        return {
-            name: "",
-            type: "",
-            nameRules: [(name: string): string | true => (name ? true : "Name is required")],
-            typeRules: [(type: string): string | true => (type ? true : "Type is required")],
-        };
-    },
-    computed: {
-        serviceTypes(): string[] {
-            return this.store.serviceTypes;
-        },
-    },
-    watch: {
-        name() {
-            this.nameField?.resetValidation();
-        },
-        type() {
-            // Reset validation is currently not supported on v-select directly
-            this.form?.resetValidation();
-        },
-    },
-    methods: {
-        show() {
-            this.name = "";
-            this.type = "";
-
-            this.dialog?.show(this.saveNewInstance, "Create service instance");
-        },
-        async saveNewInstance() {
-            const result = await this.form?.validate();
-            if (!result?.valid) {
-                return "";
-            }
-
-            try {
-                await createServiceInstance(this.type, this.name);
-                return true;
-            } catch (error) {
-                return typeof error === "string" ? error : "Unknown error";
-            }
-        },
-    },
-});
-</script>
 
 <style>
 .error-alert {

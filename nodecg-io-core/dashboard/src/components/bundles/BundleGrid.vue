@@ -1,3 +1,16 @@
+<script setup lang="ts">
+import BundleDependency from "@/components/bundles/BundleDependency.vue";
+import { useStore } from "@/store";
+import { updateBundleDependency } from "@/utils/bundles";
+import { computed, ref } from "vue";
+
+const search = ref("");
+
+const store = useStore();
+
+const filteredBundles = computed(() => store.filterBundles(search.value));
+</script>
+
 <template>
     <h1>Bundles</h1>
     <v-text-field v-model="search" class="grid-view-search" label="Search" clearable></v-text-field>
@@ -11,7 +24,7 @@
                     <BundleDependency
                         v-for="dep in bundle.dependencies"
                         :key="dep.serviceType"
-                        :dep="dep"
+                        :dependency="dep"
                         @update="(value) => updateBundleDependency(name, dep, value)"
                     />
                 </div>
@@ -19,39 +32,6 @@
         </v-card>
     </div>
 </template>
-
-<script lang="ts">
-import BundleDependency from "@/components/bundles/BundleDependency.vue";
-import { useStore } from "@/store";
-import { updateBundleDependency } from "@/utils/bundles";
-import { Bundle, ObjectMap } from "@/utils/types";
-import { defineComponent } from "vue";
-
-export default defineComponent({
-    name: "BundleGrid",
-    components: {
-        BundleDependency,
-    },
-    setup() {
-        const store = useStore();
-
-        return {
-            filterBundles: store.filterBundles,
-            updateBundleDependency,
-        };
-    },
-    data() {
-        return {
-            search: "",
-        };
-    },
-    computed: {
-        filteredBundles(): ObjectMap<Bundle> {
-            return this.filterBundles(this.search);
-        },
-    },
-});
-</script>
 
 <style>
 .bundle {

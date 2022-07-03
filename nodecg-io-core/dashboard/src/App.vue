@@ -1,20 +1,12 @@
+<script setup lang="ts">
+import "@/assets/global.css";
+import AppAuth from "@/views/AppAuth.vue";
+</script>
+
 <template>
     <v-app>
         <v-main>
-            <Auth />
+            <AppAuth />
         </v-main>
     </v-app>
 </template>
-
-<script lang="ts">
-import "@/assets/global.css";
-import Auth from "@/views/Auth.vue";
-import { defineComponent } from "vue";
-
-export default defineComponent({
-    name: "App",
-    components: {
-        Auth,
-    },
-});
-</script>

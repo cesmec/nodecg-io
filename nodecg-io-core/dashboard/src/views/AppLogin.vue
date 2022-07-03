@@ -1,3 +1,57 @@
+<script setup lang="ts">
+import { useStore } from "@/store";
+import { isFirstStartup, isPasswordSet, setPassword } from "@/utils/crypto";
+import { VuetifyValidationRule } from "@/utils/types";
+import { onMounted, ref } from "vue";
+import type { VForm } from "vuetify/components";
+
+const { isLoaded, loggedIn } = useStore();
+
+const passwordRules: VuetifyValidationRule[] = [(value) => (value ? true : "Password is required")];
+
+const form = ref<VForm>();
+const firstStartup = ref(false);
+const loading = ref(false);
+const password = ref("");
+const passwordErrors = ref<string[]>([]);
+
+onMounted(() => {
+    // Load initial state
+    updateLoadedStatus();
+    updateFirstStartupLabel();
+});
+
+async function submitForm(e: Event) {
+    e.preventDefault();
+    const formResult = await form.value?.validate();
+    if (formResult?.valid) {
+        loading.value = true;
+        await loadFramework();
+        loading.value = false;
+    }
+}
+
+async function updateLoadedStatus(): Promise<void> {
+    const loaded = await isLoaded();
+    const isLoggedIn = loaded && isPasswordSet();
+    loggedIn(isLoggedIn);
+}
+
+async function loadFramework(): Promise<void> {
+    if (await setPassword(password.value)) {
+        passwordErrors.value = [];
+    } else {
+        passwordErrors.value = ["The provided password is incorrect!"];
+    }
+
+    updateLoadedStatus();
+}
+
+async function updateFirstStartupLabel(): Promise<void> {
+    firstStartup.value = await isFirstStartup();
+}
+</script>
+
 <template>
     <div class="login-container">
         <v-card class="small-card login-card" elevation="2">
@@ -23,7 +77,7 @@
                                     label="Password"
                                     type="password"
                                     autocomplete="password"
-                                    :rules="rules"
+                                    :rules="passwordRules"
                                     :error-messages="passwordErrors"
                                     hide-details="auto"
                                 ></v-text-field>
@@ -49,68 +103,6 @@
         </v-card>
     </div>
 </template>
-
-<script lang="ts">
-import { useStore } from "@/store";
-import { isFirstStartup, isPasswordSet, setPassword } from "@/utils/crypto";
-import { defineComponent, ref } from "vue";
-import { VForm } from "vuetify/components";
-
-export default defineComponent({
-    name: "AppLogin",
-    setup() {
-        const store = useStore();
-
-        return {
-            isLoaded: store.isLoaded,
-            loggedIn: store.loggedIn,
-            form: ref<VForm>(),
-        };
-    },
-    data() {
-        return {
-            firstStartup: false,
-            loading: false,
-            password: "",
-            passwordErrors: [] as string[],
-            rules: [(value: string): string | true => (value ? true : "Password is required")],
-        };
-    },
-    mounted() {
-        // Load initial state
-        this.updateLoadedStatus();
-        this.updateFirstStartupLabel();
-    },
-    methods: {
-        async submitForm(e: Event) {
-            e.preventDefault();
-            const formResult = await this.form?.validate();
-            if (formResult?.valid) {
-                this.loading = true;
-                await this.loadFramework();
-                this.loading = false;
-            }
-        },
-        async updateLoadedStatus(): Promise<void> {
-            const loaded = await this.isLoaded();
-            const loggedIn = loaded && isPasswordSet();
-            this.loggedIn(loggedIn);
-        },
-        async loadFramework(): Promise<void> {
-            if (await setPassword(this.password)) {
-                this.passwordErrors = [];
-            } else {
-                this.passwordErrors = ["The provided password is incorrect!"];
-            }
-
-            this.updateLoadedStatus();
-        },
-        async updateFirstStartupLabel(): Promise<void> {
-            this.firstStartup = await isFirstStartup();
-        },
-    },
-});
-</script>
 
 <style scoped>
 .login-container {
