@@ -37,6 +37,11 @@ button:focus {
     outline: none !important;
 }
 
+/* Text-secondary overwrites disabled button color */
+.v-btn.text-secondary.v-btn--disabled {
+    opacity: 0.5;
+}
+
 .small-card {
     width: 600px;
     max-width: 90vw;

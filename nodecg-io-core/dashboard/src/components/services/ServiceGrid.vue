@@ -2,6 +2,7 @@
 import ConfirmDialog from "@/components/ConfirmDialog.vue";
 import ServiceConfigDialog from "@/components/services/ServiceConfigDialog.vue";
 import ServiceCreateDialog from "@/components/services/ServiceCreateDialog.vue";
+import ServiceGridInstance from "@/components/services/ServiceGridInstance.vue";
 import { useStore, useStoreState } from "@/store";
 import { deleteServiceInstance } from "@/utils/services";
 import { ServiceInstance } from "@/utils/types";
@@ -21,9 +22,13 @@ function openCreateDialog() {
     createDialog.value?.show();
 }
 
+function getService(instance: ServiceInstance) {
+    return services.value.find((service) => service.serviceType === instance.serviceType);
+}
+
 function showConfigDialog(instanceName: string) {
     const instance = instances.value[instanceName];
-    const service = services.value.find((svc) => svc.serviceType === instance?.serviceType);
+    const service = instance ? getService(instance) : undefined;
     if (instance && service) {
         configDialog.value?.show(instanceName, instance, service);
     }
@@ -34,14 +39,14 @@ function showConfigDialog(instanceName: string) {
  * @param instance Service instance to test
  */
 function needsConfig(instance: ServiceInstance) {
-    const service = services.value.find((s) => s.serviceType === instance.serviceType);
+    const service = getService(instance);
     if (!service || service.requiresNoConfig) {
         return false;
     }
     return !instance.config;
 }
 
-function confirmDelete(instanceName: string) {
+function confirmToDelete(instanceName: string) {
     const deleteInstance = async () => {
         try {
             await deleteServiceInstance(instanceName);
@@ -63,34 +68,15 @@ function confirmDelete(instanceName: string) {
     <h1>Service instances</h1>
     <v-text-field v-model="search" class="grid-view-search" label="Search" clearable></v-text-field>
     <div class="grid-view-container">
-        <v-btn
+        <ServiceGridInstance
             v-for="(instance, name) in filteredInstances"
             :key="name"
-            class="service-instance"
-            :aria-label="'Service ' + name + ' of type ' + instance.serviceType"
-            @click="showConfigDialog(name)"
-        >
-            <div class="service-instance-content">
-                <v-card-title class="instance-title">
-                    <span class="ellipsis">
-                        <v-icon v-if="needsConfig(instance)" color="warning" title="Needs configuration"
-                            >mdi-alert</v-icon
-                        >
-                        {{ name }}
-                    </span>
-                </v-card-title>
-                <v-card-subtitle class="instance-type">{{ instance.serviceType }}</v-card-subtitle>
-                <v-btn
-                    class="btn-delete-service"
-                    color="error"
-                    icon="mdi-delete"
-                    size="small"
-                    title="Delete"
-                    :aria-label="'Delete service ' + name"
-                    @click.stop="confirmDelete(name)"
-                ></v-btn>
-            </div>
-        </v-btn>
+            :name="name"
+            :instance="instance"
+            :needsConfig="needsConfig(instance)"
+            @click:config="showConfigDialog(name)"
+            @click:delete="confirmToDelete(name)"
+        />
     </div>
     <ServiceCreateDialog ref="createDialog" />
     <ServiceConfigDialog ref="configDialog" />
@@ -107,46 +93,6 @@ function confirmDelete(instanceName: string) {
 </template>
 
 <style>
-.service-instance {
-    padding: 0;
-    margin: 10px;
-    min-height: 100px;
-    min-width: 200px;
-    max-width: 400px;
-    overflow: hidden;
-}
-
-.service-instance > .v-btn__content {
-    width: 100%;
-}
-
-.service-instance-content {
-    display: grid;
-    grid-template-columns: 1fr 50px;
-    grid-template-rows: auto auto;
-    grid-auto-rows: min-content;
-    padding: 0;
-    margin: 0;
-    width: 100%;
-    overflow: hidden;
-}
-
-.instance-title {
-    grid-column: 1;
-    grid-row: 1;
-    max-width: 250px;
-}
-
-.instance-type {
-    grid-column: 1;
-    grid-row: 2;
-}
-
-.btn-delete-service {
-    grid-area: 1 / 2 / span 2;
-    place-self: center;
-}
-
 .btn-create-service {
     position: absolute;
     bottom: 20px;

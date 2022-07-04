@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { useStore } from "@/store";
-import { isFirstStartup, isPasswordSet, setPassword } from "@/utils/crypto";
+import { isFirstStartup, setPassword } from "@/utils/crypto";
 import { VuetifyValidationRule } from "@/utils/types";
 import { onMounted, ref } from "vue";
 import type { VForm } from "vuetify/components";
 
-const { isLoaded, loggedIn } = useStore();
+const { updateLoginState } = useStore();
 
 const passwordRules: VuetifyValidationRule[] = [(value) => (value ? true : "Password is required")];
 
@@ -15,10 +15,10 @@ const loading = ref(false);
 const password = ref("");
 const passwordErrors = ref<string[]>([]);
 
-onMounted(() => {
+onMounted(async () => {
     // Load initial state
-    updateLoadedStatus();
-    updateFirstStartupLabel();
+    updateLoginState();
+    firstStartup.value = await isFirstStartup();
 });
 
 async function submitForm(e: Event) {
@@ -26,37 +26,26 @@ async function submitForm(e: Event) {
     const formResult = await form.value?.validate();
     if (formResult?.valid) {
         loading.value = true;
-        await loadFramework();
+        await login();
         loading.value = false;
     }
 }
 
-async function updateLoadedStatus(): Promise<void> {
-    const loaded = await isLoaded();
-    const isLoggedIn = loaded && isPasswordSet();
-    loggedIn(isLoggedIn);
-}
-
-async function loadFramework(): Promise<void> {
+async function login(): Promise<void> {
     if (await setPassword(password.value)) {
         passwordErrors.value = [];
     } else {
         passwordErrors.value = ["The provided password is incorrect!"];
     }
-
-    updateLoadedStatus();
-}
-
-async function updateFirstStartupLabel(): Promise<void> {
-    firstStartup.value = await isFirstStartup();
+    await updateLoginState();
 }
 </script>
 
 <template>
     <div class="login-container">
-        <v-card class="small-card login-card" elevation="2">
+        <v-card class="small-card" elevation="2">
             <v-card-title>
-                <img class="logo" alt="nodecg-io header" src="header_white.png" />
+                <img class="logo" alt="nodecg-io" src="header_white.png" />
             </v-card-title>
             <v-card-text>
                 <v-form @submit="submitForm" ref="form">
@@ -107,20 +96,10 @@ async function updateFirstStartupLabel(): Promise<void> {
 <style scoped>
 .login-container {
     display: grid;
+    place-items: center;
 }
 
 .logo {
     width: 80%;
-}
-
-.login-card {
-    min-height: 300px;
-    place-self: center;
-}
-
-form {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
 }
 </style>

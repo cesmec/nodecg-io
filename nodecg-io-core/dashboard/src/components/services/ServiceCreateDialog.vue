@@ -76,14 +76,3 @@ async function saveNewInstance() {
         </v-form>
     </ConfirmDialog>
 </template>
-
-<style>
-.error-alert {
-    width: 100%;
-}
-
-.error-alert-text {
-    display: grid;
-    align-items: center;
-}
-</style>

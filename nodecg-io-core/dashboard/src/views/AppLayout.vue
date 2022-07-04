@@ -42,11 +42,16 @@ const { mdAndUp } = useDisplay();
 
 .layout-tabs {
     flex: 0;
+    height: 50px;
+    color: rgb(var(--v-theme-secondary));
+    background-color: rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .layout-tab {
     width: 50%;
     max-width: 50%;
+    height: 50px;
 }
 
 .layout-container-content {

@@ -204,8 +204,4 @@ function onClose() {
     display: grid;
     place-items: center;
 }
-
-.config-dialog .v-card-text {
-    opacity: 1;
-}
 </style>

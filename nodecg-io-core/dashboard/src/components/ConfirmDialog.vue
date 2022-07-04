@@ -60,7 +60,7 @@ function show(onConfirm: ConfirmCallback, title: string, message?: string) {
 }
 
 async function confirm() {
-    if (confirmCallback.value && !loading.value) {
+    if (!props.confirmDisabled && confirmCallback.value && !loading.value) {
         loading.value = true;
         const result = await confirmCallback.value();
         loading.value = false;
@@ -129,6 +129,10 @@ function keydown(e: KeyboardEvent) {
 
 .dialog-subtitle-content {
     opacity: 0.6;
+}
+
+.error-alert {
+    width: 100%;
 }
 
 .error-alert-text {

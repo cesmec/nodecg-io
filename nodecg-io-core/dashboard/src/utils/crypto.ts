@@ -136,7 +136,8 @@ async function fetchServices() {
     services = await nodecg.sendMessage("getServices");
 }
 
-async function loadFramework(): Promise<boolean> {
+export async function loadFramework(): Promise<boolean> {
+    if (!password) return false;
     if (await isLoaded()) return true;
 
     try {

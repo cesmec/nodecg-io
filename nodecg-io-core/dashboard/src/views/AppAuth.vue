@@ -1,20 +1,24 @@
 <script setup lang="ts">
-import { useStoreState } from "@/store";
+import { useStore, useStoreState } from "@/store";
 import AppLayout from "@/views/AppLayout.vue";
 import AppLogin from "@/views/AppLogin.vue";
+import { watch } from "vue";
 
-const { loggedIn } = useStoreState();
+const { tryLogin } = useStore();
+const { connected, loggedIn } = useStoreState();
+
+watch(connected, (isConnected) => {
+    if (isConnected) {
+        tryLogin();
+    }
+});
 </script>
 
 <template>
     <div class="auth-container">
         <transition name="fade">
-            <template v-if="loggedIn">
-                <AppLayout />
-            </template>
-            <template v-else>
-                <AppLogin />
-            </template>
+            <AppLayout v-if="loggedIn" />
+            <AppLogin v-else />
         </transition>
     </div>
 </template>

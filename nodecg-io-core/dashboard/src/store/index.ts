@@ -1,5 +1,5 @@
 import { sortBundles } from "@/utils/bundles";
-import { config, ConfigData, isLoaded } from "@/utils/crypto";
+import { config, ConfigData, isLoaded, isPasswordSet, loadFramework } from "@/utils/crypto";
 import { filterObjectMap } from "@/utils/objectUtils";
 import { Bundle, ObjectMap, Service, ServiceInstance } from "@/utils/types";
 import { computed, ComputedRef, inject, InjectionKey, reactive } from "vue";
@@ -56,10 +56,17 @@ class Store {
         );
     };
 
-    isLoaded = async (): Promise<boolean> => {
+    updateLoginState = async () => {
         const loaded = await isLoaded();
+        const loggedIn = loaded && isPasswordSet();
         this.state.loaded = loaded;
-        return loaded;
+        this.state.loggedIn = loggedIn;
+    };
+
+    tryLogin = async () => {
+        if (await loadFramework()) {
+            await this.updateLoginState();
+        }
     };
 
     configUpdate = (configData: ConfigData | undefined) => {
@@ -72,14 +79,6 @@ class Store {
 
     connected = (isConnected: boolean) => {
         this.state.connected = isConnected;
-    };
-
-    loaded = (isLoaded: boolean) => {
-        this.state.loaded = isLoaded;
-    };
-
-    loggedIn = (isLoggedIn: boolean) => {
-        this.state.loggedIn = isLoggedIn;
     };
 }
 
@@ -94,7 +93,7 @@ const initialState: State = {
 const store = Object.freeze(new Store(initialState));
 
 // Load initial values
-store.isLoaded();
+store.updateLoginState();
 store.configUpdate(config.data);
 
 // Automatically update store on config changes

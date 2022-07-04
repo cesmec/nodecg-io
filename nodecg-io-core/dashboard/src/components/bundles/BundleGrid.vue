@@ -16,7 +16,7 @@ const filteredBundles = computed(() => store.filterBundles(search.value));
     <v-text-field v-model="search" class="grid-view-search" label="Search" clearable></v-text-field>
     <div class="grid-view-container">
         <v-card v-for="(bundle, name) in filteredBundles" :key="name" :class="{ bundle: true, active: bundle.active }">
-            <v-card-title class="bundle-title">
+            <v-card-title>
                 <span class="ellipsis">{{ name }}</span>
             </v-card-title>
             <v-card-text>
@@ -45,10 +45,6 @@ const filteredBundles = computed(() => store.filterBundles(search.value));
 
 .bundle.active {
     opacity: 1;
-}
-
-.bundle-title {
-    margin-bottom: 0;
 }
 
 .bundle-dependencies {
