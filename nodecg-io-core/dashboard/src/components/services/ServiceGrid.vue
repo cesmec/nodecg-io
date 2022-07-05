@@ -4,6 +4,7 @@ import ServiceConfigDialog from "@/components/services/ServiceConfigDialog.vue";
 import ServiceCreateDialog from "@/components/services/ServiceCreateDialog.vue";
 import ServiceGridInstance from "@/components/services/ServiceGridInstance.vue";
 import { useStore, useStoreState } from "@/store";
+import { emptySuccess, error } from "@/utils/result";
 import { deleteServiceInstance } from "@/utils/services";
 import { ServiceInstance } from "@/utils/types";
 import { computed, ref } from "vue";
@@ -50,9 +51,9 @@ function confirmToDelete(instanceName: string) {
     const deleteInstance = async () => {
         try {
             await deleteServiceInstance(instanceName);
-            return true;
-        } catch (error) {
-            return typeof error === "string" ? error : "Unknown error";
+            return emptySuccess();
+        } catch (err) {
+            return error(err instanceof Error ? err.message : String(err));
         }
     };
 

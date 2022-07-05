@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import ConfirmDialog from "@/components/ConfirmDialog.vue";
 import { useStore } from "@/store";
+import { emptySuccess, error } from "@/utils/result";
 import { createServiceInstance } from "@/utils/services";
 import { VuetifyValidationRule } from "@/utils/types";
 import { computed, ref, watch } from "vue";
@@ -38,9 +39,9 @@ function show() {
 async function saveNewInstance() {
     try {
         await createServiceInstance(type.value, name.value);
-        return true;
-    } catch (error) {
-        return typeof error === "string" ? error : "Unknown error";
+        return emptySuccess();
+    } catch (err) {
+        return error(err instanceof Error ? err.message : String(err));
     }
 }
 </script>

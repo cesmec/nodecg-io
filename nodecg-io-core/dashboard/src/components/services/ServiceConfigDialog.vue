@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import ConfirmDialog from "@/components/ConfirmDialog.vue";
 import { objectDeepCopy } from "@/utils/objectUtils";
+import { emptySuccess, error } from "@/utils/result";
 import { updateServiceInstanceConfig } from "@/utils/services";
 import { ObjectMap, Service, ServiceInstance } from "@/utils/types";
 import type * as monaco from "monaco-editor/esm/vs/editor/editor.api"; // Types only, chunk is loaded later
@@ -39,9 +40,9 @@ function show(instanceName: string, instance: ServiceInstance, service: Service)
             const configJson = editor.value?.getValue() ?? "";
             const config = JSON.parse(configJson);
             await updateServiceInstanceConfig(instanceName, config);
-            return true;
-        } catch (error) {
-            return error instanceof Error ? error.message : String(error);
+            return emptySuccess();
+        } catch (err) {
+            return error(err instanceof Error ? err.message : String(err));
         }
     };
 

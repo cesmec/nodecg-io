@@ -1,8 +1,8 @@
 <script setup lang="ts">
+import { Result } from "@/utils/result";
 import { onMounted, onUnmounted, ref } from "vue";
 
-export type ConfirmResult = true | string;
-type ConfirmCallback = () => Promise<ConfirmResult> | ConfirmResult;
+type ConfirmCallback = () => Promise<Result<void>> | Result<void>;
 
 defineExpose({
     show,
@@ -46,7 +46,7 @@ onUnmounted(() => {
 
 /**
  * Open this dialog with the specified title and optional message.
- * @param onConfirm A function that is called when the dialog is confirmed. Return true to continue and close the dialog or an error message to display.
+ * @param onConfirm A function that is called when the dialog is confirmed. Return a successful Result to continue and close the dialog or a failed one with a message to display.
  * @param title Dialog title
  * @param message Dialog message (optional), can not be combined with the default vue slot
  */
@@ -65,10 +65,10 @@ async function confirm() {
         const result = await confirmCallback.value();
         loading.value = false;
 
-        if (result === true) {
-            close();
+        if (result.failed) {
+            error.value = result.errorMessage ?? "Unknown error";
         } else {
-            error.value = result ?? "Unknown error";
+            close();
         }
     }
 }
