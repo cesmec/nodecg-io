@@ -47,6 +47,13 @@ function needsConfig(instance: ServiceInstance) {
     return !instance.config;
 }
 
+function instanceCreated(instanceName: string) {
+    const instance = instances.value[instanceName];
+    if (instance && needsConfig(instance)) {
+        showConfigDialog(instanceName);
+    }
+}
+
 function confirmToDelete(instanceName: string) {
     const deleteInstance = async () => {
         try {
@@ -79,7 +86,7 @@ function confirmToDelete(instanceName: string) {
             @click:delete="confirmToDelete(name)"
         />
     </div>
-    <ServiceCreateDialog ref="createDialog" />
+    <ServiceCreateDialog ref="createDialog" @created="instanceCreated" />
     <ServiceConfigDialog ref="configDialog" />
     <ConfirmDialog ref="deleteConfirmDialog" confirmText="Delete" closeText="Cancel" confirmColor="error" />
     <v-btn

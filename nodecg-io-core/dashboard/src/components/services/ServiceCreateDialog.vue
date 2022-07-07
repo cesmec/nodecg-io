@@ -4,11 +4,15 @@ import { useStore } from "@/store";
 import { emptySuccess, error } from "@/utils/result";
 import { createServiceInstance } from "@/utils/services";
 import { VuetifyValidationRule } from "@/utils/types";
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import type { VForm, VTextField } from "vuetify/components";
 
 defineExpose({
     show,
+});
+
+const emit = defineEmits({
+    created: (instanceName: string) => typeof instanceName === "string",
 });
 
 const dialog = ref<InstanceType<typeof ConfirmDialog>>();
@@ -38,7 +42,11 @@ function show() {
 
 async function saveNewInstance() {
     try {
-        await createServiceInstance(type.value, name.value);
+        const instanceName = name.value;
+        await createServiceInstance(type.value, instanceName);
+        nextTick(() => {
+            emit("created", instanceName);
+        });
         return emptySuccess();
     } catch (err) {
         return error(err instanceof Error ? err.message : String(err));
@@ -64,7 +72,6 @@ async function saveNewInstance() {
             <v-row>
                 <v-col cols="12">
                     <v-select
-                        ref="typeField"
                         v-model="type"
                         :items="serviceTypes"
                         :rules="typeRules"
